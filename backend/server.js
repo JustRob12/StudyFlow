@@ -4,6 +4,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import taskRoutes from './routes/tasks.js';
+import timerRoutes from './routes/timers.js';
+import historyRoutes from './routes/history.js';
 
 dotenv.config();
 
@@ -16,6 +18,8 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/timers', timerRoutes);
+app.use('/api/history', historyRoutes);
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
