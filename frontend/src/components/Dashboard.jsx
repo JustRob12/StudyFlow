@@ -127,42 +127,14 @@ const Dashboard = () => {
           <DashboardCard
             icon="🎯"
             title="Goals"
-            description="Set and achieve your targets"
+            description="Track your study goals"
+            onClick={() => navigate('/goals')}
             color="bg-green-50"
           >
-            <div className="mt-4 space-y-4">
-              <h4 className="font-medium text-gray-800">Daily Goals</h4>
-              <div className="space-y-2">
-                <GoalItem 
-                  icon="+" 
-                  text="Add a Task"
-                  status="Pending"
-                />
-                <GoalItem 
-                  icon="✓" 
-                  text="Complete a Task"
-                  status="Pending"
-                />
-                <GoalItem 
-                  icon="⏱" 
-                  text="Study Session (25+ mins)"
-                  status="Pending"
-                />
-              </div>
-
-              <h4 className="font-medium text-gray-800">Weekly Goals</h4>
-              <div className="space-y-2">
-                <GoalItem 
-                  icon="⏱" 
-                  text="Study Hours"
-                  status={`Progress: ${weeklyStats.studyHours} / ${weeklyStats.targetHours} hours`}
-                />
-                <GoalItem 
-                  icon="📚" 
-                  text="Subject Variety"
-                  status={`Progress: ${weeklyStats.subjects.size} / ${weeklyStats.targetSubjects} subjects`}
-                />
-              </div>
+            <div className="mt-2 text-sm text-gray-600">
+              {/* Display current progress */}
+              <div>Daily: {completedTasks.length} tasks completed</div>
+              <div>Weekly: {weeklyStats.studyHours} study hours</div>
             </div>
           </DashboardCard>
 

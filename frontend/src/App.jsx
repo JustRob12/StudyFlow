@@ -7,6 +7,7 @@ import Settings from './components/Settings'
 import ViewTask from './components/ViewTask'
 import History from './components/History'
 import Progress from './components/Progress';
+import Goals from './components/Goals';
 import { TimerProvider } from './context/TimerContext'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/tasks" element={<ViewTask />} />
           <Route path="/history" element={<History />} />
           <Route path="/progress" element={<Progress />} />
+          <Route path="/goals" element={<Goals />} />
         </Routes>
       </Router>
     </TimerProvider>
