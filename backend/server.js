@@ -11,8 +11,20 @@ dotenv.config();
 
 const app = express();
 
+// CORS configuration
+const corsOptions = {
+  origin: [
+    'https://study-flow-two.vercel.app',
+    'http://localhost:5173', // Local development
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Debug middleware to log requests
@@ -22,13 +34,13 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/timers', timerRoutes);
-app.use('/api/history', historyRoutes);
+app.use('/auth', authRoutes);
+app.use('/tasks', taskRoutes);
+app.use('/timers', timerRoutes);
+app.use('/history', historyRoutes);
 
 // Test route
-app.get('/api/test', (req, res) => {
+app.get('/test', (req, res) => {
   res.json({ message: 'API is working' });
 });
 
@@ -56,10 +68,10 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log('Available routes:');
-      console.log('- /api/auth');
-      console.log('- /api/tasks');
-      console.log('- /api/timers');
-      console.log('- /api/history');
+      console.log('- /auth');
+      console.log('- /tasks');
+      console.log('- /timers');
+      console.log('- /history');
     });
   } catch (err) {
     console.error('Failed to start server:', err);
