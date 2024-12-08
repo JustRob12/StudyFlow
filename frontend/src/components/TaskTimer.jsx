@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTimer } from '../context/TimerContext';
 import { timerAPI } from '../utils/api';
 
@@ -9,11 +9,6 @@ const TaskTimer = ({ taskId, duration, onComplete }) => {
   const isThisTimerActive = activeTimer && activeTimer.taskId === taskId;
 
   useEffect(() => {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     setIsVisible(isThisTimerActive);
   }, [isThisTimerActive]);
 
@@ -54,40 +49,9 @@ const TaskTimer = ({ taskId, duration, onComplete }) => {
     } catch (err) {
       setError('Failed to control timer');
       console.error('Timer action error:', err);
-=======
-    if (isThisTimerActive) {
-      setDisplayTime(timeLeft);
     }
-  }, [isThisTimerActive, timeLeft]);  
+  };
 
-=======
-    if (isThisTimerActive) {
-      setDisplayTime(timeLeft);
-    }
-  }, [isThisTimerActive, timeLeft]);  
-
->>>>>>> parent of fabc826 (second commit)
-=======
-    if (isThisTimerActive) {
-      setDisplayTime(timeLeft);
-    }
-  }, [isThisTimerActive, timeLeft]);  
-
->>>>>>> parent of fabc826 (second commit)
-=======
-    if (isThisTimerActive) {
-      setDisplayTime(timeLeft);
-    }
-  }, [isThisTimerActive, timeLeft]);  
-
->>>>>>> parent of fabc826 (second commit)
-=======
-    if (isThisTimerActive) {
-      setDisplayTime(timeLeft);
-    }
-  }, [isThisTimerActive, timeLeft]);  
-
->>>>>>> parent of fabc826 (second commit)
   const toggleTimer = async () => {
     if (!isThisTimerActive) {
       await startTimer(taskId);
@@ -95,28 +59,7 @@ const TaskTimer = ({ taskId, duration, onComplete }) => {
       await resumeTimer(taskId);
     } else {
       await pauseTimer(taskId);
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
     }
-  };
-
-  const formatTime = (seconds) => {
-    if (seconds === null) return "00:00:00";
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -140,4 +83,4 @@ const TaskTimer = ({ taskId, duration, onComplete }) => {
   );
 };
 
-export default TaskTimer; 
+export default TaskTimer;

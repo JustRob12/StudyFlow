@@ -1,31 +1,5 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-import React, { useEffect, useState } from 'react';
-import { goalsAPI, statsAPI } from '../utils/api';
-import BottomBar from './BottomBar';
-=======
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
-=======
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
-=======
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
-=======
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
-=======
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
+import { statsAPI, goalsAPI } from '../utils/api';
 import Header from './Header';
 import BottomBar from './BottomBar';
 
@@ -51,34 +25,11 @@ const Goals = () => {
 
   const fetchData = async () => {
     try {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
       setLoading(true);
       const [userResponse, historyResponse, goalsResponse] = await Promise.all([
         statsAPI.getUser(),
         statsAPI.getHistory(),
         goalsAPI.getGoals()
-=======
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-      const token = localStorage.getItem('token');
-      const [userResponse, historyResponse] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/auth/user`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${import.meta.env.VITE_API_URL}/history`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
->>>>>>> parent of fabc826 (second commit)
       ]);
 
       setUser(userResponse.data);
@@ -86,55 +37,36 @@ const Goals = () => {
       setGoals(goalsResponse.data);
 
       // Calculate progress
-      const calculatedProgress = goalsAPI.calculateProgress(historyResponse.data);
-      setProgress(calculatedProgress);
+      const today = new Date().toISOString().split('T')[0];
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - 7);
+
+      const todayEntries = historyResponse.data.filter(entry => 
+        new Date(entry.date).toISOString().split('T')[0] === today
+      );
+
+      const weekEntries = historyResponse.data.filter(entry =>
+        new Date(entry.date) >= weekStart
+      );
+
+      const todayHours = todayEntries.reduce((acc, entry) => acc + (entry.duration / 3600), 0);
+      const weekHours = weekEntries.reduce((acc, entry) => acc + (entry.duration / 3600), 0);
+      const todayCompleted = todayEntries.filter(entry => entry.completed).length;
+      const weekSubjects = new Set(weekEntries.map(entry => entry.subject)).size;
+
+      setProgress({
+        todayStudyHours: todayHours,
+        weekStudyHours: weekHours,
+        todayTasksCompleted: todayCompleted,
+        weekSubjectsStudied: weekSubjects,
+      });
     } catch (error) {
       console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-<<<<<<< HEAD
-=======
-  const calculateProgress = (historyData) => {
-    const today = new Date().toISOString().split('T')[0];
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - 7);
-
-    // Calculate today's study hours and tasks
-    const todayEntries = historyData.filter(entry => 
-      new Date(entry.endTime).toISOString().split('T')[0] === today
-    );
-
-    const todayStudyHours = todayEntries.reduce((acc, entry) => 
-      acc + ((entry.timeSpent || 0) / 3600), 0
-    );
-
-    const todayTasksCompleted = todayEntries.length;
-
-    // Calculate week's study hours and unique subjects
-    const weekEntries = historyData.filter(entry => 
-      new Date(entry.endTime) >= weekStart
-    );
-
-    const weekStudyHours = weekEntries.reduce((acc, entry) => 
-      acc + ((entry.timeSpent || 0) / 3600), 0
-    );
-
-    const weekSubjects = new Set(
-      weekEntries
-        .filter(entry => entry.subject && entry.subject.trim() !== '')
-        .map(entry => entry.subject)
-    );
-
-    setProgress({
-      todayStudyHours: Number(todayStudyHours.toFixed(1)),
-      weekStudyHours: Number(weekStudyHours.toFixed(1)),
-      todayTasksCompleted,
-      weekSubjectsStudied: weekSubjects.size,
-    });
-  };
-
->>>>>>> parent of fabc826 (second commit)
   const getProgressColor = (current, target) => {
     const percentage = (current / target) * 100;
     if (percentage >= 100) return 'bg-green-500';

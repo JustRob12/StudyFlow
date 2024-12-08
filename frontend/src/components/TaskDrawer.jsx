@@ -1,31 +1,6 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { useState } from 'react';
 import { tasksAPI } from '../utils/api';
-import { SUBJECT_ICONS } from '../utils/subjectIcons';
-=======
-import { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
+import { SUBJECT_ICONS, getSubjectOptions } from '../utils/subjectIcons';
 
 const TaskDrawer = ({ isOpen, onClose }) => {
   const [task, setTask] = useState({
@@ -38,16 +13,11 @@ const TaskDrawer = ({ isOpen, onClose }) => {
     date: new Date().toISOString().split('T')[0],
   });
 
-  const subjects = [
-    { id: 'math', icon: '📐', name: 'Mathematics' },
-    { id: 'science', icon: '🔬', name: 'Science' },
-    { id: 'literature', icon: '📚', name: 'Literature' },
-    { id: 'history', icon: '🏛️', name: 'History' },
-    { id: 'language', icon: '💭', name: 'Language' },
-    { id: 'art', icon: '🎨', name: 'Art' },
-    { id: 'music', icon: '🎵', name: 'Music' },
-    { id: 'pe', icon: '⚽', name: 'Physical Education' },
-  ];
+  const subjects = getSubjectOptions().map(subject => ({
+    id: subject.toLowerCase().replace(/\s+/g, '-'),
+    icon: SUBJECT_ICONS[subject],
+    name: subject
+  }));
 
   const [showSubjects, setShowSubjects] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -78,34 +48,8 @@ const TaskDrawer = ({ isOpen, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-<<<<<<< HEAD
       await tasksAPI.createTask(task);
       onClose();
-=======
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/tasks`,
-        task,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      handleClose();
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
     } catch (error) {
       console.error('Error creating task:', error);
     }

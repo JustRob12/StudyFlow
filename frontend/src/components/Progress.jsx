@@ -1,20 +1,8 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
->>>>>>> parent of fabc826 (second commit)
+import { statsAPI } from '../utils/api';
+import Header from './Header';
+import BottomBar from './BottomBar';
+import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,48 +11,17 @@ import {
   Title,
   Tooltip,
   Legend,
-  PointElement,
-  LineElement,
   ArcElement
 } from 'chart.js';
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-import React, { useEffect, useState } from 'react';
-import { Bar } from 'react-chartjs-2';
-import { statsAPI, goalsAPI } from '../utils/api';
-import BottomBar from './BottomBar';
-=======
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
->>>>>>> parent of fabc826 (second commit)
-import Header from './Header';
-import BottomBar from './BottomBar';
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
-  PointElement,
-  LineElement,
-  ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ArcElement
 );
 
 const Progress = () => {
@@ -79,64 +36,51 @@ const Progress = () => {
     hours: []
   });
   const [weeklyTotal, setWeeklyTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        setLoading(true);
-=======
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-=======
->>>>>>> parent of fabc826 (second commit)
-        const token = localStorage.getItem('token');
->>>>>>> parent of fabc826 (second commit)
-        const [userResponse, historyResponse] = await Promise.all([
-          statsAPI.getUser(),
-          statsAPI.getHistory()
-        ]);
-
-        setUser(userResponse.data);
-        setHistory(historyResponse.data);
-
-        // Calculate daily stats
-        const last7Days = [...Array(7)].map((_, i) => {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          return date.toISOString().split('T')[0];
-        }).reverse();
-
-        const dailyHours = last7Days.map(date => {
-          const dayEntries = historyResponse.data.filter(entry => 
-            new Date(entry.date).toISOString().split('T')[0] === date
-          );
-          return Number((dayEntries.reduce((acc, entry) => 
-            acc + (entry.timeSpent || 0), 0) / 3600).toFixed(1));
-        });
-
-        setDailyStats({
-          labels: last7Days.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' })),
-          hours: dailyHours
-        });
-
-        // Calculate weekly total
-        setWeeklyTotal(dailyHours.reduce((acc, hours) => acc + hours, 0));
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [userResponse, historyResponse] = await Promise.all([
+        statsAPI.getUser(),
+        statsAPI.getHistory()
+      ]);
+
+      setUser(userResponse.data);
+      setHistory(historyResponse.data);
+
+      // Calculate daily stats
+      const last7Days = [...Array(7)].map((_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        return date.toISOString().split('T')[0];
+      }).reverse();
+
+      const dailyHours = last7Days.map(date => {
+        const dayEntries = historyResponse.data.filter(entry => 
+          new Date(entry.date).toISOString().split('T')[0] === date
+        );
+        return Number((dayEntries.reduce((acc, entry) => 
+          acc + (entry.timeSpent || 0), 0) / 3600).toFixed(1));
+      });
+
+      setDailyStats({
+        labels: last7Days.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' })),
+        hours: dailyHours
+      });
+
+      // Calculate weekly total
+      setWeeklyTotal(dailyHours.reduce((acc, hours) => acc + hours, 0));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const processHistoryData = (historyData) => {
     // Get last 7 days

@@ -1,26 +1,6 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { tasksAPI } from '../utils/api';
 import { SUBJECT_ICONS } from '../utils/subjectIcons';
-=======
-import { useState, useEffect } from 'react';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { useState, useEffect } from 'react';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { useState, useEffect } from 'react';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { useState, useEffect } from 'react';
->>>>>>> parent of fabc826 (second commit)
-=======
-import { useState, useEffect } from 'react';
->>>>>>> parent of fabc826 (second commit)
 
 const EditTaskModal = ({ task, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -29,6 +9,7 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
     date: '',
     duration: { hours: 0, minutes: 0 }
   });
+  const [isAnimating, setIsAnimating] = useState(true);
 
   useEffect(() => {
     if (task) {
@@ -43,12 +24,8 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     setIsAnimating(false);
+
     const updatedTask = {
       ...task,
       ...formData,
@@ -57,27 +34,13 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
         minutes: parseInt(formData.duration.minutes) || 0
       }
     };
+
     try {
       await tasksAPI.updateTask(task._id, updatedTask);
       setTimeout(() => onSave(updatedTask), 300);
     } catch (error) {
       console.error('Error updating task:', error);
     }
-=======
-    onSave(task._id, formData);
->>>>>>> parent of fabc826 (second commit)
-=======
-    onSave(task._id, formData);
->>>>>>> parent of fabc826 (second commit)
-=======
-    onSave(task._id, formData);
->>>>>>> parent of fabc826 (second commit)
-=======
-    onSave(task._id, formData);
->>>>>>> parent of fabc826 (second commit)
-=======
-    onSave(task._id, formData);
->>>>>>> parent of fabc826 (second commit)
   };
 
   return (
@@ -116,14 +79,9 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
               required
             >
               <option value="">Select a subject</option>
-              <option value="math">Math</option>
-              <option value="science">Science</option>
-              <option value="literature">Literature</option>
-              <option value="history">History</option>
-              <option value="language">Language</option>
-              <option value="art">Art</option>
-              <option value="music">Music</option>
-              <option value="pe">PE</option>
+              {Object.entries(SUBJECT_ICONS).map(([value, { name }]) => (
+                <option key={value} value={value}>{name}</option>
+              ))}
             </select>
           </div>
 
