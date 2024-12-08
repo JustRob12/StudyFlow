@@ -1,5 +1,8 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> parent of fabc826 (second commit)
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 >>>>>>> parent of fabc826 (second commit)
@@ -16,10 +19,14 @@ import {
   ArcElement
 } from 'chart.js';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { statsAPI, goalsAPI } from '../utils/api';
 import BottomBar from './BottomBar';
+=======
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 >>>>>>> parent of fabc826 (second commit)
@@ -56,8 +63,11 @@ const Progress = () => {
     const fetchData = async () => {
       try {
 <<<<<<< HEAD
+<<<<<<< HEAD
         setLoading(true);
 =======
+=======
+>>>>>>> parent of fabc826 (second commit)
         const token = localStorage.getItem('token');
 >>>>>>> parent of fabc826 (second commit)
         const [userResponse, historyResponse] = await Promise.all([

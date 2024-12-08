@@ -1,7 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import { goalsAPI, statsAPI } from '../utils/api';
 import BottomBar from './BottomBar';
+=======
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -32,12 +37,15 @@ const Goals = () => {
   const fetchData = async () => {
     try {
 <<<<<<< HEAD
+<<<<<<< HEAD
       setLoading(true);
       const [userResponse, historyResponse, goalsResponse] = await Promise.all([
         statsAPI.getUser(),
         statsAPI.getHistory(),
         goalsAPI.getGoals()
 =======
+=======
+>>>>>>> parent of fabc826 (second commit)
       const token = localStorage.getItem('token');
       const [userResponse, historyResponse] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/auth/user`, {

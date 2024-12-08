@@ -1,6 +1,11 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { timerAPI } from '../utils/api';
+=======
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
@@ -14,6 +19,7 @@ export const TimerProvider = ({ children }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(Date.now());
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   // Initialize timer state
   useEffect(() => {
@@ -230,6 +236,82 @@ export const TimerProvider = ({ children }) => {
       const elapsedSeconds = Math.floor((now - state.lastUpdate) / 1000);
       const adjustedTimeLeft = Math.max(0, state.timeLeft - (state.isPaused ? 0 : elapsedSeconds));
 
+=======
+  // Function to fetch timer from server
+  const fetchActiveTimer = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/timers/active`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data) {
+        setActiveTimer(response.data);
+        setLocalTimeLeft(response.data.timeRemaining);
+        setIsPaused(false);
+        setLastUpdate(Date.now());
+      }
+    } catch (error) {
+      console.error('Error fetching timer:', error);
+    }
+  }, []);
+
+  // Update timer when window gains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (activeTimer && !isPaused) {
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - lastUpdate) / 1000);
+        setLocalTimeLeft(prev => Math.max(0, prev - elapsedSeconds));
+        setLastUpdate(now);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [activeTimer, isPaused, lastUpdate]);
+
+  // Local countdown effect
+  useEffect(() => {
+    let intervalId;
+    
+    if (activeTimer?.isRunning && localTimeLeft > 0 && !isPaused) {
+      intervalId = setInterval(() => {
+        setLocalTimeLeft(prev => {
+          const newTime = Math.max(0, prev - 1);
+          // Store current state in localStorage
+          const timerState = {
+            timeLeft: newTime,
+            lastUpdate: Date.now(),
+            isPaused: false,
+            timerId: activeTimer._id,
+            taskId: activeTimer.taskId
+          };
+          localStorage.setItem('timerState', JSON.stringify(timerState));
+          return newTime;
+        });
+        setLastUpdate(Date.now());
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [activeTimer?.isRunning, activeTimer?._id, isPaused]);
+
+  // Restore timer state on mount and after page changes
+  useEffect(() => {
+    const storedState = localStorage.getItem('timerState');
+    if (storedState) {
+      const state = JSON.parse(storedState);
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - state.lastUpdate) / 1000);
+      const adjustedTimeLeft = Math.max(0, state.timeLeft - (state.isPaused ? 0 : elapsedSeconds));
+
+>>>>>>> parent of fabc826 (second commit)
       setLocalTimeLeft(adjustedTimeLeft);
       setIsPaused(state.isPaused);
       setLastUpdate(now);
@@ -414,6 +496,9 @@ export const TimerProvider = ({ children }) => {
       resumeTimer,
       completeTimer
     }}>
+<<<<<<< HEAD
+>>>>>>> parent of fabc826 (second commit)
+=======
 >>>>>>> parent of fabc826 (second commit)
       {children}
     </TimerContext.Provider>
