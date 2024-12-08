@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { statsAPI } from '../utils/statsApi';
-import { tasksAPI } from '../utils/tasksApi';
+import { statsAPI, tasksAPI } from '../utils/api';
 import BottomBar from './BottomBar';
 import ConfirmModal from './ConfirmModal';
 import Header from './Header';

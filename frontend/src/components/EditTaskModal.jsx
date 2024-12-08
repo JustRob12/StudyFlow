@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { tasksAPI } from '../utils/tasksApi';
+import { tasksAPI } from '../utils/api';
 import { SUBJECT_ICONS } from '../utils/subjectIcons';
 
 const EditTaskModal = ({ task, onClose, onSave }) => {

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { statsAPI } from '../utils/statsApi';
+import { statsAPI } from '../utils/api';
 
 const Profile = ({ user, onClose, isOpen, onUserUpdate }) => {
   const [isAnimating, setIsAnimating] = useState(false);

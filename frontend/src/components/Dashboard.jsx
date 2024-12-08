@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTimer } from '../context/TimerContext';
-import { tasksAPI } from '../utils/tasksApi';
+import { tasksAPI } from '../utils/api';
 import BottomBar from './BottomBar';
 import ConfirmModal from './ConfirmModal';
 import Header from './Header';

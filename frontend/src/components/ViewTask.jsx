@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTimer } from '../context/TimerContext';
-import { tasksAPI } from '../utils/tasksApi';
-import { statsAPI } from '../utils/statsApi';
+import { apiEndpoints } from '../utils/api';
 import { getSubjectIcon } from '../utils/subjectIcons';
 import BottomBar from './BottomBar';
 import ConfirmModal from './ConfirmModal';
@@ -48,9 +47,9 @@ const ViewTask = () => {
     try {
       setLoading(true);
       const [userResponse, tasksResponse, statsResponse] = await Promise.all([
-        statsAPI.getUser(),
-        tasksAPI.getTasks(),
-        tasksAPI.getWeeklyStats()
+        apiEndpoints.stats.getUser(),
+        apiEndpoints.tasks.getTasks(),
+        apiEndpoints.tasks.getWeeklyStats()
       ]);
 
       setUser(userResponse.data);
@@ -83,7 +82,7 @@ const ViewTask = () => {
 
   const handleEditTask = async (updatedTask) => {
     try {
-      await tasksAPI.updateTask(updatedTask._id, updatedTask);
+      await apiEndpoints.tasks.updateTask(updatedTask._id, updatedTask);
       setTasks(prevTasks =>
         prevTasks.map(task =>
           task._id === updatedTask._id ? updatedTask : task
@@ -99,7 +98,7 @@ const ViewTask = () => {
   const handleDeleteTask = async () => {
     if (!deletingTask) return;
     try {
-      await tasksAPI.deleteTask(deletingTask._id);
+      await apiEndpoints.tasks.deleteTask(deletingTask._id);
       setTasks(prevTasks =>
         prevTasks.filter(task => task._id !== deletingTask._id)
       );
@@ -113,7 +112,7 @@ const ViewTask = () => {
   const handleCompleteTask = async () => {
     if (!completingTask) return;
     try {
-      await tasksAPI.completeTask(completingTask._id);
+      await apiEndpoints.tasks.completeTask(completingTask._id);
       setTasks(prevTasks =>
         prevTasks.map(task =>
           task._id === completingTask._id ? { ...task, completed: true } : task

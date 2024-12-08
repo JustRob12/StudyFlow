@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
@@ -15,27 +16,34 @@ const app = express();
 // CORS configuration
 const corsOptions = {
   origin: [
-    'https://study-flow-two.vercel.app',
-    'http://localhost:5173', // Local development
+    'http://localhost:5173',
+    'https://studyflow-k4ec.onrender.com'
   ],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
-  exposedHeaders: ['Content-Length', 'Content-Type'],
   credentials: true,
-  optionsSuccessStatus: 200,
-  maxAge: 3600 // Pre-flight cache duration
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization',
+    'Origin',
+    'X-Requested-With',
+    'Accept',
+    'Access-Control-Allow-Credentials'
+  ],
+  exposedHeaders: ['set-cookie']
 };
 
-// Enable pre-flight requests for all routes
-app.options('*', cors(corsOptions));
+// Add this before your routes
+app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
+app.use(cors(corsOptions));
 
 // Middleware
-app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 
 // Debug middleware to log requests
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);
+  console.log('Headers:', req.headers);
   next();
 });
 

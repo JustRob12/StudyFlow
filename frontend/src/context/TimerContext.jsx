@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { timerAPI } from '../utils/timerApi';
+import { timerAPI } from '../utils/api';
 
 const TimerContext = createContext();
 

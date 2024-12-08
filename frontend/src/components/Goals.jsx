@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { goalsAPI } from '../utils/goalsApi';
-import { statsAPI } from '../utils/statsApi';
+import { goalsAPI, statsAPI } from '../utils/api';
 import BottomBar from './BottomBar';
 import Header from './Header';
 

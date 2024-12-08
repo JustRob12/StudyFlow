@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTimer } from '../context/TimerContext';
-import { timerAPI } from '../utils/timerApi';
+import { timerAPI } from '../utils/api';
 
 const TaskTimer = ({ taskId, onComplete }) => {
   const { timeLeft, isPaused, pauseTimer, resumeTimer, activeTimer, error: contextError } = useTimer();

@@ -11,8 +11,7 @@ import {
 } from 'chart.js';
 import React, { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { statsAPI } from '../utils/statsApi';
-import { goalsAPI } from '../utils/goalsApi';
+import { statsAPI, goalsAPI } from '../utils/api';
 import BottomBar from './BottomBar';
 import Header from './Header';
 
