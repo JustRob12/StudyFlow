@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 const TimerContext = createContext();
 
@@ -7,269 +6,167 @@ export const TimerProvider = ({ children }) => {
   const [activeTimer, setActiveTimer] = useState(null);
   const [localTimeLeft, setLocalTimeLeft] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState(Date.now());
+  const [error, setError] = useState(null);
+  const intervalRef = useRef(null);
+  const lastTickRef = useRef(Date.now());
 
-  // Function to fetch timer from server
-  const fetchActiveTimer = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/timers/active`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      if (response.data) {
-        setActiveTimer(response.data);
-        setLocalTimeLeft(response.data.timeRemaining);
-        setIsPaused(false);
-        setLastUpdate(Date.now());
-      }
-    } catch (error) {
-      console.error('Error fetching timer:', error);
-    }
-  }, []);
-
-  // Update timer when window gains focus
-  useEffect(() => {
-    const handleFocus = () => {
-      if (activeTimer && !isPaused) {
-        const now = Date.now();
-        const elapsedSeconds = Math.floor((now - lastUpdate) / 1000);
-        setLocalTimeLeft(prev => Math.max(0, prev - elapsedSeconds));
-        setLastUpdate(now);
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [activeTimer, isPaused, lastUpdate]);
-
-  // Local countdown effect
-  useEffect(() => {
-    let intervalId;
-    
-    if (activeTimer?.isRunning && localTimeLeft > 0 && !isPaused) {
-      intervalId = setInterval(() => {
-        setLocalTimeLeft(prev => {
-          const newTime = Math.max(0, prev - 1);
-          // Store current state in localStorage
-          const timerState = {
-            timeLeft: newTime,
-            lastUpdate: Date.now(),
-            isPaused: false,
-            timerId: activeTimer._id,
-            taskId: activeTimer.taskId
-          };
-          localStorage.setItem('timerState', JSON.stringify(timerState));
-          return newTime;
-        });
-        setLastUpdate(Date.now());
-      }, 1000);
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [activeTimer?.isRunning, activeTimer?._id, isPaused]);
-
-  // Restore timer state on mount and after page changes
+  // Initialize timer state
   useEffect(() => {
     const storedState = localStorage.getItem('timerState');
     if (storedState) {
-      const state = JSON.parse(storedState);
-      const now = Date.now();
-      const elapsedSeconds = Math.floor((now - state.lastUpdate) / 1000);
-      const adjustedTimeLeft = Math.max(0, state.timeLeft - (state.isPaused ? 0 : elapsedSeconds));
+      try {
+        const state = JSON.parse(storedState);
+        const now = Date.now();
+        const elapsedTime = state.isPaused ? 0 : Math.floor((now - state.lastTick) / 1000);
+        const newTimeLeft = Math.max(0, state.timeLeft - elapsedTime);
 
-      setLocalTimeLeft(adjustedTimeLeft);
-      setIsPaused(state.isPaused);
-      setLastUpdate(now);
-
-      // Fetch fresh timer data from server
-      fetchActiveTimer();
-    }
-  }, [fetchActiveTimer]);
-
-  // Sync with server periodically
-  useEffect(() => {
-    const syncInterval = setInterval(async () => {
-      if (activeTimer && !isPaused) {
-        try {
-          const token = localStorage.getItem('token');
-          await axios.post(
-            `${import.meta.env.VITE_API_URL}/timers/sync`,
-            {
-              taskId: activeTimer.taskId,
-              timeRemaining: localTimeLeft
-            },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-        } catch (error) {
-          console.error('Error syncing timer:', error);
+        setLocalTimeLeft(newTimeLeft);
+        setIsPaused(state.isPaused);
+        if (state.taskId && state.duration) {
+          setActiveTimer({
+            taskId: state.taskId,
+            duration: state.duration
+          });
         }
+        lastTickRef.current = now;
+      } catch (err) {
+        console.error('Failed to restore timer state:', err);
+        localStorage.removeItem('timerState');
       }
-    }, 5000);
+    }
+  }, []);
 
-    return () => clearInterval(syncInterval);
+  // Save timer state
+  const saveTimerState = useCallback(() => {
+    if (activeTimer) {
+      localStorage.setItem('timerState', JSON.stringify({
+        timeLeft: localTimeLeft,
+        isPaused,
+        taskId: activeTimer.taskId,
+        duration: activeTimer.duration,
+        lastTick: Date.now()
+      }));
+    }
   }, [activeTimer, localTimeLeft, isPaused]);
 
-  const startTimer = async (taskId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/timers/start`,
-        { taskId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  // Handle timer countdown
+  useEffect(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    if (activeTimer && !isPaused && localTimeLeft > 0) {
+      lastTickRef.current = Date.now();
       
-      setActiveTimer(response.data);
-      setLocalTimeLeft(response.data.timeRemaining);
+      intervalRef.current = setInterval(() => {
+        const now = Date.now();
+        const elapsed = Math.floor((now - lastTickRef.current) / 1000);
+        
+        if (elapsed >= 1) {
+          setLocalTimeLeft(prev => {
+            const newTimeLeft = Math.max(0, prev - elapsed);
+            lastTickRef.current = now;
+            return newTimeLeft;
+          });
+          saveTimerState();
+        }
+      }, 1000);
+    } else {
+      saveTimerState();
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [activeTimer?.taskId, isPaused, saveTimerState]);
+
+  // Check for completion
+  useEffect(() => {
+    if (localTimeLeft === 0 && activeTimer) {
+      completeTimer();
+    }
+  }, [localTimeLeft]);
+
+  const startTimer = async (taskId, duration) => {
+    try {
+      const durationInSeconds = (duration.hours * 3600) + (duration.minutes * 60);
+      
+      setActiveTimer({
+        taskId,
+        duration: durationInSeconds
+      });
+      setLocalTimeLeft(durationInSeconds);
       setIsPaused(false);
-      setLastUpdate(Date.now());
+      lastTickRef.current = Date.now();
       
       localStorage.setItem('timerState', JSON.stringify({
-        timeLeft: response.data.timeRemaining,
-        lastUpdate: Date.now(),
+        timeLeft: durationInSeconds,
         isPaused: false,
-        timerId: response.data._id,
-        taskId: response.data.taskId
+        taskId,
+        duration: durationInSeconds,
+        lastTick: Date.now()
       }));
+      
+      return true;
     } catch (error) {
       console.error('Error starting timer:', error);
+      setError('Failed to start timer');
+      return false;
     }
   };
 
-  const pauseTimer = async (taskId) => {
-    try {
-      setIsPaused(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/timers/pause`,
-        { taskId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      localStorage.setItem('timerState', JSON.stringify({
-        timeLeft: localTimeLeft,
-        lastUpdate: Date.now(),
-        isPaused: true,
-        timerId: activeTimer._id,
-        taskId: activeTimer.taskId
-      }));
-      
-      setActiveTimer(response.data);
-    } catch (error) {
-      console.error('Error pausing timer:', error);
-    }
+  const pauseTimer = () => {
+    setIsPaused(true);
+    saveTimerState();
   };
 
-  const resumeTimer = async (taskId) => {
+  const resumeTimer = () => {
+    setIsPaused(false);
+    lastTickRef.current = Date.now();
+    saveTimerState();
+  };
+
+  const completeTimer = () => {
     try {
+      setActiveTimer(null);
+      setLocalTimeLeft(0);
       setIsPaused(false);
-      setLastUpdate(Date.now());
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/timers/start`,
-        { taskId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      setActiveTimer(response.data);
-      
-      localStorage.setItem('timerState', JSON.stringify({
-        timeLeft: localTimeLeft,
-        lastUpdate: Date.now(),
-        isPaused: false,
-        timerId: response.data._id,
-        taskId: response.data.taskId
-      }));
-    } catch (error) {
-      console.error('Error resuming timer:', error);
-    }
-  };
-
-  const completeTimer = async (taskId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const timer = activeTimer;
-      
-      if (!timer) {
-        console.error('No active timer found');
-        return;
-      }
-
-      try {
-        // Get the task details first
-        const taskResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/tasks/${taskId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        const task = taskResponse.data;
-        const timeSpent = timer.duration - timer.timeRemaining;
-        const endTime = new Date();
-
-        // Create history entry with all details
-        await axios.post(
-          `${import.meta.env.VITE_API_URL}/history`,
-          {
-            taskId,
-            title: task.title,
-            description: task.description,
-            startTime: timer.startTime,
-            endTime: endTime,
-            duration: timer.duration,
-            timeSpent: timeSpent,
-            completed: true,
-            status: 'completed'
-          },
-          { 
-            headers: { 
-              Authorization: `Bearer ${token}` 
-            } 
-          }
-        );
-
-        // Delete the task
-        await axios.delete(
-          `${import.meta.env.VITE_API_URL}/tasks/${taskId}`,
-          { 
-            headers: { 
-              Authorization:`Bearer ${token}` 
-            } 
-          }
-        );
-
-        //  Clear timer state
-        setActiveTimer(null);
-        setLocalTimeLeft(null);
-        setIsPaused(false);
-        localStorage.removeItem('timerState');
-
-      } catch (error) {
-        console.error('Error in completion process:', error);
-      }
-
+      localStorage.removeItem('timerState');
+      return true;
     } catch (error) {
       console.error('Error completing timer:', error);
+      return false;
     }
+  };
+
+  const value = {
+    activeTimer,
+    timeLeft: localTimeLeft,
+    isPaused,
+    error,
+    startTimer,
+    pauseTimer,
+    resumeTimer,
+    completeTimer
   };
 
   return (
-    <TimerContext.Provider value={{ 
-      activeTimer, 
-      timeLeft: localTimeLeft,
-      isPaused,
-      startTimer, 
-      pauseTimer,
-      resumeTimer,
-      completeTimer
-    }}>
+    <TimerContext.Provider value={value}>
       {children}
     </TimerContext.Provider>
   );
 };
 
-export const useTimer = () => useContext(TimerContext); 
+export const useTimer = () => {
+  const context = useContext(TimerContext);
+  if (!context) {
+    throw new Error('useTimer must be used within a TimerProvider');
+  }
+  return context;
+};
+
+export default TimerContext;

@@ -14,6 +14,10 @@ const taskSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  icon: {
+    type: String,
+    default: '📚'
+  },
   duration: {
     hours: {
       type: Number,
