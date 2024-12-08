@@ -2,10 +2,16 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTimer } from '../context/TimerContext';
 import { tasksAPI } from '../utils/api';
+=======
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -40,6 +46,7 @@ const Dashboard = () => {
     targetSubjects: 3
   });
   const navigate = useNavigate();
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -187,6 +194,8 @@ const Dashboard = () => {
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
+=======
+>>>>>>> parent of fabc826 (second commit)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -240,6 +249,9 @@ const Dashboard = () => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of fabc826 (second commit)
+=======
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
@@ -284,6 +296,7 @@ const Dashboard = () => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     <div className="flex flex-col h-screen bg-[#f8f9fb]">
       <style>
         {`
@@ -306,6 +319,10 @@ const Dashboard = () => {
       <div className="flex-none">
         <Header user={user} />
       </div>
+=======
+    <div className="min-h-screen bg-gray-100">
+      <Header user={user} />
+>>>>>>> parent of fabc826 (second commit)
 =======
     <div className="min-h-screen bg-gray-100">
       <Header user={user} />
@@ -350,6 +367,7 @@ const Dashboard = () => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             <div className="bg-[#d0efff] p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-gray-500">Active Session</p>
@@ -384,6 +402,8 @@ const Dashboard = () => {
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
+=======
+>>>>>>> parent of fabc826 (second commit)
           <DashboardCard
             icon="🎯"
             title="Goals"
@@ -398,6 +418,9 @@ const Dashboard = () => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of fabc826 (second commit)
+=======
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
@@ -435,6 +458,7 @@ const Dashboard = () => {
         </div>
       </main>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -527,6 +551,9 @@ const Dashboard = () => {
           }
         `}
       </style>
+=======
+      <BottomBar />
+>>>>>>> parent of fabc826 (second commit)
 =======
       <BottomBar />
 >>>>>>> parent of fabc826 (second commit)

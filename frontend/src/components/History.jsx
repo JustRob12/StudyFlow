@@ -2,10 +2,15 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { useEffect, useState } from 'react';
 import { statsAPI, tasksAPI } from '../utils/api';
 import BottomBar from './BottomBar';
 import ConfirmModal from './ConfirmModal';
+=======
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -38,6 +43,7 @@ const History = () => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredHistory(history);
@@ -51,6 +57,8 @@ const History = () => {
 
   const fetchData = async () => {
 =======
+=======
+>>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
 =======
@@ -130,6 +138,7 @@ const History = () => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   const SUBJECT_ICONS = {
     'Mathematics': '',
     'Science': '',
@@ -158,6 +167,8 @@ const History = () => {
     setShowConfirmModal(true);
   };
 
+=======
+>>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
 =======
@@ -216,6 +227,7 @@ const History = () => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
       {/* Confirmation Modal */}
       <ConfirmModal
@@ -250,6 +262,8 @@ const History = () => {
         variant="success"
         buttonText="Done"
       />
+=======
+>>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
 =======

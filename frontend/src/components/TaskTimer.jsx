@@ -13,6 +13,7 @@ const TaskTimer = ({ taskId, duration, onComplete }) => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     setIsVisible(isThisTimerActive);
   }, [isThisTimerActive]);
 
@@ -80,6 +81,13 @@ const TaskTimer = ({ taskId, duration, onComplete }) => {
   }, [isThisTimerActive, timeLeft]);  
 
 >>>>>>> parent of fabc826 (second commit)
+=======
+    if (isThisTimerActive) {
+      setDisplayTime(timeLeft);
+    }
+  }, [isThisTimerActive, timeLeft]);  
+
+>>>>>>> parent of fabc826 (second commit)
   const toggleTimer = async () => {
     if (!isThisTimerActive) {
       await startTimer(taskId);
@@ -90,6 +98,9 @@ const TaskTimer = ({ taskId, duration, onComplete }) => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of fabc826 (second commit)
+=======
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)

@@ -2,7 +2,10 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
 =======
@@ -28,10 +31,14 @@ import {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { statsAPI, goalsAPI } from '../utils/api';
 import BottomBar from './BottomBar';
+=======
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 >>>>>>> parent of fabc826 (second commit)
@@ -80,8 +87,11 @@ const Progress = () => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         setLoading(true);
 =======
+=======
+>>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
 =======
