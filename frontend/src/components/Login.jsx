@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../utils/api';
-import axios from 'axios';
 import booksIcon from '../assets/books-icon.png';
 
 const Login = () => {
@@ -10,6 +9,7 @@ const Login = () => {
     password: ''
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -17,20 +17,22 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+    setError(''); // Clear error when user types
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
+    
     try {
       const response = await authAPI.login(formData);
-      if (response.success) {
-        localStorage.setItem('token', response.token);
-        navigate('/dashboard');
-      } else {
-        setError(response.error);
-      }
+      localStorage.setItem('token', response.data.token);
+      navigate('/dashboard');
     } catch (err) {
-      setError('An error occurred during login');
+      setError(err.response?.data?.message || 'An error occurred during login. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -44,60 +46,66 @@ const Login = () => {
           <p className="mt-2 text-sm text-gray-600">Login to continue studying</p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && <div className="text-red-500 text-center text-sm">{error}</div>}
+          {error && (
+            <div className="text-red-500 text-center text-sm bg-red-50 p-2 rounded">
+              {error}
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <input
                 name="email"
                 type="email"
                 required
-                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Email Address"
                 value={formData.email}
                 onChange={handleChange}
+                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+                disabled={isLoading}
               />
             </div>
-            <div className="relative">
+            <div>
               <input
                 name="password"
                 type="password"
                 required
-                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
+                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+                disabled={isLoading}
               />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => {
-                  const input = document.querySelector('input[name="password"]');
-                  input.type = input.type === 'password' ? 'text' : 'password';
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
             </div>
           </div>
 
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-[#2196F3] hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              disabled={isLoading}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
             >
-              Login
+              {isLoading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Logging in...
+                </span>
+              ) : (
+                'Sign in'
+              )}
             </button>
           </div>
+
+          <div className="text-sm text-center">
+            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+              Don't have an account? Register here
+            </Link>
+          </div>
         </form>
-        <div className="text-sm text-center">
-          <span className="text-gray-600">Don't have an account? </span>
-          <Link to="/register" className="font-medium text-[#2196F3] hover:text-blue-600">
-            Sign up
-          </Link>
-        </div>
       </div>
     </div>
   );

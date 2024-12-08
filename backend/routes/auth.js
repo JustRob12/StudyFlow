@@ -14,7 +14,9 @@ router.post('/register', async (req, res) => {
     // Check if user exists
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ 
+        message: existingUser.email === email ? 'Email already registered' : 'Username already taken' 
+      });
     }
 
     // Hash password
@@ -28,11 +30,25 @@ router.post('/register', async (req, res) => {
       password: hashedPassword
     });
 
-    // Save user
+    // Save user and generate token
     const savedUser = await newUser.save();
-    res.status(201).json(savedUser);
+    const token = jwt.sign(
+      { userId: savedUser._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.status(201).json({
+      token,
+      user: {
+        id: savedUser._id,
+        username: savedUser.username,
+        email: savedUser.email
+      }
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Registration error:', err);
+    res.status(500).json({ message: 'Server error during registration' });
   }
 });
 
@@ -41,28 +57,37 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if user exists
-    const user = await User.findOne({ email });
+    // Check if user exists (include only necessary fields)
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(400).json({ message: 'User not found' });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
     // Check password
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res.status(400).json({ message: 'Invalid password' });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Create token
+    // Generate token
     const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '1d' }
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
     );
 
-    res.status(200).json({ token, user: { id: user._id, username: user.username, email: user.email } });
+    // Send response without password
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email
+      }
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Server error during login' });
   }
 });
 
@@ -75,7 +100,8 @@ router.get('/user', auth, async (req, res) => {
     }
     res.json(user);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Get user error:', err);
+    res.status(500).json({ message: 'Server error during getting user data' });
   }
 });
 
@@ -111,7 +137,8 @@ router.patch('/update', auth, async (req, res) => {
       email: updatedUser.email 
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Update user error:', err);
+    res.status(500).json({ message: 'Server error during updating user data' });
   }
 });
 
