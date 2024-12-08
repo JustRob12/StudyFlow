@@ -7,6 +7,7 @@ import historyRoutes from './routes/history.js';
 import taskRoutes from './routes/tasks.js';
 import timerRoutes from './routes/timers.js';
 
+// Load environment variables
 dotenv.config();
 
 const app = express();
@@ -64,9 +65,12 @@ const startServer = async () => {
   try {
     await connectDB();
     
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
+    // Prioritize Render's PORT over .env PORT
+    const PORT = process.env.RENDER_PORT || process.env.PORT || 3000;
+    
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server is running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log('Available routes:');
       console.log('- /auth');
       console.log('- /tasks');
