@@ -20,7 +20,7 @@ const Dashboard = () => {
   });
   const [showTaskConfirm, setShowTaskConfirm] = useState(false);
   const navigate = useNavigate();
-  const { activeTimer } = useTimer();
+  const { activeTimer, clearActiveTimer } = useTimer();
   const [streak, setStreak] = useState(0);
   const [completedTasksTotal, setCompletedTasksTotal] = useState(0);
 
@@ -151,26 +151,53 @@ const Dashboard = () => {
   // Add this effect to sync with active timer
   useEffect(() => {
     if (activeTimer?.taskId) {
-      // Ensure the task data is loaded for the active timer
       const fetchActiveTask = async () => {
         try {
           const token = localStorage.getItem('token');
-          const response = await axios.get(`${import.meta.env.VITE_API_URL}/tasks/${activeTimer.taskId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setTasks(prevTasks => {
-            if (!prevTasks.find(t => t._id === activeTimer.taskId)) {
-              return [...prevTasks, response.data];
+          
+          // First, check if the task exists in our current tasks array
+          const existingTask = tasks.find(t => t._id === activeTimer.taskId);
+          if (existingTask) {
+            return; // Task already exists in our state, no need to fetch
+          }
+
+          const response = await axios.get(
+            `${import.meta.env.VITE_API_URL}/tasks/${activeTimer.taskId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` }
             }
-            return prevTasks;
-          });
+          );
+          
+          if (response.data) {
+            setTasks(prevTasks => [...prevTasks, response.data]);
+          }
         } catch (error) {
-          console.error('Error fetching active task:', error);
+          if (error.response?.status === 404) {
+            // Task doesn't exist anymore, clean up the timer
+            const token = localStorage.getItem('token');
+            try {
+              // Stop the timer on the backend
+              await axios.post(
+                `${import.meta.env.VITE_API_URL}/timers/pause`,
+                { taskId: activeTimer.taskId },
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              
+              // Clear the active timer from context
+              if (typeof clearActiveTimer === 'function') {
+                clearActiveTimer();
+              }
+            } catch (cleanupError) {
+              console.error('Error cleaning up timer:', cleanupError);
+            }
+          } else {
+            console.error('Error fetching active task:', error);
+          }
         }
       };
       fetchActiveTask();
     }
-  }, [activeTimer?.taskId]);
+  }, [activeTimer?.taskId, tasks, clearActiveTimer]);
 
   const DashboardCard = ({ icon, title, description, onClick, color, children }) => (
     <div 

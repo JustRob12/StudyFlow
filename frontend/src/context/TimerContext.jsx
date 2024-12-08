@@ -143,6 +143,13 @@ export const TimerProvider = ({ children }) => {
     }
   };
 
+  const clearActiveTimer = useCallback(() => {
+    setActiveTimer(null);
+    setLocalTimeLeft(null);
+    setIsPaused(false);
+    localStorage.removeItem('timerState');
+  }, []);
+
   const value = {
     activeTimer,
     timeLeft: localTimeLeft,
@@ -151,7 +158,9 @@ export const TimerProvider = ({ children }) => {
     startTimer,
     pauseTimer,
     resumeTimer,
-    completeTimer
+    completeTimer,
+    setActiveTimer,
+    clearActiveTimer
   };
 
   return (

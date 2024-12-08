@@ -1,8 +1,8 @@
-import express from 'express';
 import bcrypt from 'bcryptjs';
+import express from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
 import auth from '../middleware/auth.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -74,6 +74,42 @@ router.get('/user', auth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Update user
+router.patch('/update', auth, async (req, res) => {
+  try {
+    const { username, email } = req.body;
+    
+    // Check if username or email already exists
+    const existingUser = await User.findOne({
+      $and: [
+        { _id: { $ne: req.userId } },
+        { $or: [{ email }, { username }] }
+      ]
+    });
+    
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username or email already taken' });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.username = username;
+    user.email = email;
+    
+    const updatedUser = await user.save();
+    res.json({ 
+      id: updatedUser._id, 
+      username: updatedUser.username, 
+      email: updatedUser.email 
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
