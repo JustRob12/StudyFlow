@@ -34,7 +34,7 @@ router.post('/register', async (req, res) => {
     const savedUser = await newUser.save();
     const token = jwt.sign(
       { userId: savedUser._id },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
 
@@ -72,7 +72,7 @@ router.post('/login', async (req, res) => {
     // Generate token
     const token = jwt.sign(
       { userId: user._id },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
 
@@ -94,51 +94,50 @@ router.post('/login', async (req, res) => {
 // Get user data
 router.get('/user', auth, async (req, res) => {
   try {
+    console.log('GET /user - Looking up user:', req.userId);
     const user = await User.findById(req.userId).select('-password');
+    
     if (!user) {
+      console.log('GET /user - User not found:', req.userId);
       return res.status(404).json({ message: 'User not found' });
     }
+    
+    console.log('GET /user - User found:', user._id);
     res.json(user);
   } catch (err) {
-    console.error('Get user error:', err);
-    res.status(500).json({ message: 'Server error during getting user data' });
+    console.error('GET /user - Error:', err);
+    res.status(500).json({ message: 'Server error while fetching user data' });
   }
 });
 
 // Update user
-router.patch('/update', auth, async (req, res) => {
+router.patch('/user', auth, async (req, res) => {
   try {
-    const { username, email } = req.body;
-    
-    // Check if username or email already exists
-    const existingUser = await User.findOne({
-      $and: [
-        { _id: { $ne: req.userId } },
-        { $or: [{ email }, { username }] }
-      ]
-    });
-    
-    if (existingUser) {
-      return res.status(400).json({ message: 'Username or email already taken' });
-    }
+    const updates = req.body;
+    const allowedUpdates = ['username', 'email'];
+    const updateObj = {};
 
-    const user = await User.findById(req.userId);
+    // Only allow specific fields to be updated
+    Object.keys(updates).forEach(key => {
+      if (allowedUpdates.includes(key)) {
+        updateObj[key] = updates[key];
+      }
+    });
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { $set: updateObj },
+      { new: true, runValidators: true }
+    ).select('-password');
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    user.username = username;
-    user.email = email;
-    
-    const updatedUser = await user.save();
-    res.json({ 
-      id: updatedUser._id, 
-      username: updatedUser.username, 
-      email: updatedUser.email 
-    });
+    res.json(user);
   } catch (err) {
     console.error('Update user error:', err);
-    res.status(500).json({ message: 'Server error during updating user data' });
+    res.status(500).json({ message: 'Server error while updating user' });
   }
 });
 

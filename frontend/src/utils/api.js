@@ -42,24 +42,44 @@ api.interceptors.response.use(
       throw new Error('Network error - please check your connection');
     }
 
-    // Handle 401 Unauthorized
-    if (error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-      return Promise.reject(error);
-    }
+    // Handle specific error codes
+    switch (error.response.status) {
+      case 401:
+        // Check if it's a token expiration
+        if (error.response.data?.code === 'TOKEN_EXPIRED') {
+          console.log('Token expired, redirecting to login...');
+          localStorage.removeItem('token');
+          window.location.href = '/login?expired=true';
+          return Promise.reject(new Error('Session expired. Please log in again.'));
+        }
+        
+        // Handle other unauthorized errors
+        if (!originalRequest._retry) {
+          originalRequest._retry = true;
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+          return Promise.reject(new Error('Authentication required. Please log in.'));
+        }
+        break;
 
-    // Handle 502 Bad Gateway (common with Render free tier)
-    if (error.response.status === 502) {
-      console.error('Server temporarily unavailable (502):', error);
-      throw new Error('Server is starting up. Please try again in a moment.');
-    }
+      case 404:
+        console.error('Resource not found:', error.response.data);
+        throw new Error(error.response.data.message || 'Resource not found');
 
-    // Handle CORS errors
-    if (error.response.status === 0 && error.message.includes('Network Error')) {
-      console.error('CORS error:', error);
-      throw new Error('Unable to connect to server - CORS error');
+      case 502:
+        console.error('Server temporarily unavailable (502):', error);
+        throw new Error('Server is starting up. Please try again in a moment.');
+
+      default:
+        // Handle CORS errors
+        if (error.response.status === 0 && error.message.includes('Network Error')) {
+          console.error('CORS error:', error);
+          throw new Error('Unable to connect to server - CORS error');
+        }
+        
+        // Handle other errors
+        console.error('API error:', error.response.data);
+        throw new Error(error.response.data.message || 'An unexpected error occurred');
     }
 
     return Promise.reject(error);
