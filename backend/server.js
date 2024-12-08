@@ -19,10 +19,15 @@ const corsOptions = {
     'http://localhost:5173', // Local development
   ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+  exposedHeaders: ['Content-Length', 'Content-Type'],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  maxAge: 3600 // Pre-flight cache duration
 };
+
+// Enable pre-flight requests for all routes
+app.options('*', cors(corsOptions));
 
 // Middleware
 app.use(cors(corsOptions));
