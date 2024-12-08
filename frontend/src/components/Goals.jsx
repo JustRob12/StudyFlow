@@ -1,5 +1,6 @@
-import axios from 'axios';
 import React, { useEffect, useState } from 'react';
+import { goalsAPI } from '../utils/goalsApi';
+import { statsAPI } from '../utils/statsApi';
 import BottomBar from './BottomBar';
 import Header from './Header';
 
@@ -39,80 +40,24 @@ const Goals = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const [userResponse, historyResponse] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/auth/user`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${import.meta.env.VITE_API_URL}/history`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+      const [userResponse, historyResponse, goalsResponse] = await Promise.all([
+        statsAPI.getUser(),
+        statsAPI.getHistory(),
+        goalsAPI.getGoals()
       ]);
 
       setUser(userResponse.data);
       setHistory(historyResponse.data);
-      calculateProgress(historyResponse.data);
+      setGoals(goalsResponse.data);
+
+      // Calculate progress
+      const calculatedProgress = goalsAPI.calculateProgress(historyResponse.data);
+      setProgress(calculatedProgress);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const calculateProgress = (historyData) => {
-    const today = new Date().toISOString().split('T')[0];
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - 7);
-
-    // Daily calculations
-    const todayEntries = historyData.filter(entry => 
-      new Date(entry.endTime).toISOString().split('T')[0] === today
-    );
-
-    const todaySubjects = new Set(
-      todayEntries
-        .filter(entry => entry.subject && entry.subject.trim() !== '')
-        .map(entry => entry.subject)
-    );
-
-    // Calculate daily progress
-    const dailyProgress = {
-      todayStudyHours: Number((todayEntries.reduce((acc, entry) => 
-        acc + ((entry.timeSpent || 0) / 3600), 0)).toFixed(1)),
-      todayTasksCompleted: todayEntries.length,
-      todayFocusTime: Number((todayEntries.filter(entry => entry.isFocused).reduce((acc, entry) => 
-        acc + ((entry.timeSpent || 0) / 3600), 0)).toFixed(1)),
-      todayBreaksTaken: todayEntries.filter(entry => entry.isBreak).length,
-      todaySubjectsStudied: todaySubjects.size,
-    };
-
-    // Weekly calculations
-    const weekEntries = historyData.filter(entry => 
-      new Date(entry.endTime) >= weekStart
-    );
-
-    const weekSubjects = new Set(
-      weekEntries
-        .filter(entry => entry.subject && entry.subject.trim() !== '')
-        .map(entry => entry.subject)
-    );
-
-    // Calculate weekly progress
-    const weeklyProgress = {
-      weekStudyHours: Number((weekEntries.reduce((acc, entry) => 
-        acc + ((entry.timeSpent || 0) / 3600), 0)).toFixed(1)),
-      weekSubjectsStudied: weekSubjects.size,
-      weekAssignmentsCompleted: weekEntries.filter(entry => entry.isAssignment).length,
-      weekRevisionsCompleted: weekEntries.filter(entry => entry.isRevision).length,
-      weekReadingHours: Number((weekEntries.filter(entry => entry.isReading).reduce((acc, entry) => 
-        acc + ((entry.timeSpent || 0) / 3600), 0)).toFixed(1)),
-    };
-
-    // Update progress state with both daily and weekly progress
-    setProgress({
-      ...dailyProgress,
-      ...weeklyProgress
-    });
   };
 
   const getProgressColor = (current, target) => {

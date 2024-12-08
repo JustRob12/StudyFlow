@@ -1,5 +1,6 @@
-import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { statsAPI } from '../utils/statsApi';
+import { tasksAPI } from '../utils/tasksApi';
 import BottomBar from './BottomBar';
 import ConfirmModal from './ConfirmModal';
 import Header from './Header';
@@ -17,8 +18,7 @@ const History = () => {
   const [totalCompleted, setTotalCompleted] = useState(0);
 
   useEffect(() => {
-    fetchHistory();
-    fetchUser();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -32,40 +32,39 @@ const History = () => {
     }
   }, [searchQuery, history]);
 
-  const fetchUser = async () => {
+  const fetchData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/auth/user`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setUser(response.data);
+      setLoading(true);
+      const [userResponse, historyResponse, statsResponse] = await Promise.all([
+        statsAPI.getUser(),
+        statsAPI.getHistory(),
+        tasksAPI.getCompletedTotal()
+      ]);
+
+      setUser(userResponse.data);
+      setHistory(historyResponse.data);
+      setTotalCompleted(statsResponse.data.total);
+      setFilteredHistory(historyResponse.data);
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchHistory = async () => {
+  const handleClearHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/history`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const historyEntries = response.data.map(entry => ({
-        ...entry,
-        taskTitle: entry.title
-      }));
-
-      // Calculate total completed tasks
-      const completedCount = historyEntries.filter(entry => entry.completed).length;
-      setTotalCompleted(completedCount);
-      setHistory(historyEntries);
+      setIsDeleting(true);
+      await statsAPI.clearHistory();
+      setHistory([]);
+      setFilteredHistory([]);
+      setTotalCompleted(0);
+      setShowConfirmModal(false);
+      setShowSuccessModal(true);
     } catch (error) {
-      console.error('Error fetching history:', error);
+      console.error('Error clearing history:', error);
     } finally {
-      setLoading(false);
+      setIsDeleting(false);
     }
   };
 
@@ -86,23 +85,23 @@ const History = () => {
   };
 
   const SUBJECT_ICONS = {
-    'Mathematics': '📐',
-    'Science': '🔬',
-    'Literature': '📚',
-    'History': '🏛️',
-    'Language': '💭',
-    'Art': '🎨',
-    'Music': '🎵',
-    'Physical Education': '⚽',
-    'Computer Science': '💻',
-    'Biology': '🧬',
-    'Chemistry': '⚗️',
-    'Physics': '⚛️',
-    'Geography': '🌍',
-    'Economics': '📊',
-    'Psychology': '🧠',
-    'Engineering': '⚙️',
-    'Default': '📚'
+    'Mathematics': '',
+    'Science': '',
+    'Literature': '',
+    'History': '',
+    'Language': '',
+    'Art': '',
+    'Music': '',
+    'Physical Education': '',
+    'Computer Science': '',
+    'Biology': '',
+    'Chemistry': '',
+    'Physics': '',
+    'Geography': '',
+    'Economics': '',
+    'Psychology': '',
+    'Engineering': '',
+    'Default': ''
   };
 
   const getSubjectIcon = (subject) => {
@@ -111,28 +110,6 @@ const History = () => {
 
   const handleDeleteClick = () => {
     setShowConfirmModal(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    try {
-      setIsDeleting(true);
-      const token = localStorage.getItem('token');
-      
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/history`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      setHistory([]);
-      setFilteredHistory([]);
-      setShowConfirmModal(false);
-      setShowSuccessModal(true);
-    } catch (error) {
-      console.error('Error deleting history:', error);
-      alert('Failed to delete history. Please try again.');
-    } finally {
-      setIsDeleting(false);
-    }
   };
 
   return (
@@ -268,7 +245,7 @@ const History = () => {
       <ConfirmModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirmDelete}
+        onConfirm={handleClearHistory}
         title="Delete All History"
         message="Are you sure you want to delete all task history? This action cannot be undone."
         variant="red"
@@ -301,5 +278,4 @@ const History = () => {
   );
 };
 
-export default History; 
-    
+export default History;

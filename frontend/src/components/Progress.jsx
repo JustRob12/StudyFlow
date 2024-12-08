@@ -1,4 +1,3 @@
-import axios from 'axios';
 import {
   BarElement,
   CategoryScale,
@@ -12,6 +11,8 @@ import {
 } from 'chart.js';
 import React, { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
+import { statsAPI } from '../utils/statsApi';
+import { goalsAPI } from '../utils/goalsApi';
 import BottomBar from './BottomBar';
 import Header from './Header';
 
@@ -41,21 +42,36 @@ const Progress = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
         const [userResponse, historyResponse] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/auth/user`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${import.meta.env.VITE_API_URL}/history`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          statsAPI.getUser(),
+          statsAPI.getHistory()
         ]);
 
         setUser(userResponse.data);
         setHistory(historyResponse.data);
 
-        // Process history data for charts
-        processHistoryData(historyResponse.data);
+        // Calculate daily stats
+        const last7Days = [...Array(7)].map((_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          return date.toISOString().split('T')[0];
+        }).reverse();
+
+        const dailyHours = last7Days.map(date => {
+          const dayEntries = historyResponse.data.filter(entry => 
+            new Date(entry.date).toISOString().split('T')[0] === date
+          );
+          return Number((dayEntries.reduce((acc, entry) => 
+            acc + (entry.timeSpent || 0), 0) / 3600).toFixed(1));
+        });
+
+        setDailyStats({
+          labels: last7Days.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' })),
+          hours: dailyHours
+        });
+
+        // Calculate weekly total
+        setWeeklyTotal(dailyHours.reduce((acc, hours) => acc + hours, 0));
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {

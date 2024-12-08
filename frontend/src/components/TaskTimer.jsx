@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTimer } from '../context/TimerContext';
+import { timerAPI } from '../utils/timerApi';
 
 const TaskTimer = ({ taskId, onComplete }) => {
   const { timeLeft, isPaused, pauseTimer, resumeTimer, activeTimer, error: contextError } = useTimer();
@@ -22,16 +23,28 @@ const TaskTimer = ({ taskId, onComplete }) => {
 
   useEffect(() => {
     if (isThisTimerActive && timeLeft === 0) {
-      onComplete?.();
+      handleTimerComplete();
     }
-  }, [timeLeft, isThisTimerActive, onComplete]);
+  }, [timeLeft, isThisTimerActive]);
 
-  const handleTimerAction = () => {
+  const handleTimerComplete = async () => {
+    try {
+      await timerAPI.completeTimer(taskId);
+      onComplete?.();
+    } catch (err) {
+      setError('Failed to complete timer');
+      console.error('Timer completion error:', err);
+    }
+  };
+
+  const handleTimerAction = async () => {
     try {
       setError(null);
       if (isPaused) {
+        await timerAPI.resumeTimer(taskId);
         resumeTimer();
       } else {
+        await timerAPI.pauseTimer(taskId);
         pauseTimer();
       }
     } catch (err) {

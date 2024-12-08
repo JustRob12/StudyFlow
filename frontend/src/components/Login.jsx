@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { authAPI } from '../utils/api';
 import axios from 'axios';
 import booksIcon from '../assets/books-icon.png';
 
@@ -21,11 +22,15 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, formData);
-      localStorage.setItem('token', response.data.token);
-      navigate('/dashboard');
+      const response = await authAPI.login(formData);
+      if (response.success) {
+        localStorage.setItem('token', response.token);
+        navigate('/dashboard');
+      } else {
+        setError(response.error);
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred');
+      setError('An error occurred during login');
     }
   };
 

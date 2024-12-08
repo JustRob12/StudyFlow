@@ -1,5 +1,5 @@
-import axios from 'axios';
 import { useState } from 'react';
+import { tasksAPI } from '../utils/tasksApi';
 import { SUBJECT_ICONS } from '../utils/subjectIcons';
 
 const TaskDrawer = ({ isOpen, onClose }) => {
@@ -19,16 +19,7 @@ const TaskDrawer = ({ isOpen, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/tasks`,
-        task,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      await tasksAPI.createTask(task);
       onClose();
     } catch (error) {
       console.error('Error creating task:', error);

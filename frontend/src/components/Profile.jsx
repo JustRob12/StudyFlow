@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { statsAPI } from '../utils/statsApi';
 
 const Profile = ({ user, onClose, isOpen, onUserUpdate }) => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -20,65 +21,14 @@ const Profile = ({ user, onClose, isOpen, onUserUpdate }) => {
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const historyResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL}/history`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Calculate completed tasks
-      const completedTasks = historyResponse.data.filter(entry => entry.completed).length || 0;
-
-      // Calculate study hours - convert milliseconds to hours
-      const studyHours = Number((historyResponse.data.reduce((acc, entry) => {
-        return acc + (entry.timeSpent || 0);
-      }, 0) / 3600).toFixed(1)) || 0;
-
-      // Get today's and this week's entries
-      const today = new Date().toISOString().split('T')[0];
-      const weekStart = new Date();
-      weekStart.setDate(weekStart.getDate() - 7);
-
-      const todayEntries = historyResponse.data.filter(entry => 
-        new Date(entry.endTime).toISOString().split('T')[0] === today
-      );
-
-      const weekEntries = historyResponse.data.filter(entry => 
-        new Date(entry.endTime) >= weekStart
-      );
-
-      // Calculate goals completed
-      let goalsCompleted = 0;
-
-      // Daily goals
-      const todayStudyHours = Number((todayEntries.reduce((acc, entry) => 
-        acc + ((entry.timeSpent || 0) / 3600), 0)).toFixed(1));
-      if (todayStudyHours >= 2) goalsCompleted++; // 2 hours daily goal
-
-      const todayTasksCount = todayEntries.filter(entry => entry.completed).length;
-      if (todayTasksCount >= 3) goalsCompleted++; // 3 tasks daily goal
-
-      // Weekly goals
-      const weeklyStudyHours = Number((weekEntries.reduce((acc, entry) => 
-        acc + ((entry.timeSpent || 0) / 3600), 0)).toFixed(1));
-      if (weeklyStudyHours >= 10) goalsCompleted++; // 10 hours weekly goal
-
-      const weeklySubjects = new Set(weekEntries.map(entry => entry.subject)).size;
-      if (weeklySubjects >= 3) goalsCompleted++; // 3 subjects weekly goal
-
-      const weeklyAssignments = weekEntries.filter(entry => 
-        entry.completed && entry.isAssignment
-      ).length;
-      if (weeklyAssignments >= 5) goalsCompleted++; // 5 assignments weekly goal
-
-      console.log('Stats calculated:', { completedTasks, studyHours, goalsCompleted }); // Debug log
-
+      const historyResponse = await statsAPI.getHistory();
+      const calculatedStats = statsAPI.calculateStats(historyResponse.data);
+      
       setStats({
-        tasksCompleted: completedTasks,
-        hoursStudied: studyHours,
-        goalsCompleted: goalsCompleted
+        tasksCompleted: calculatedStats.completedTasks,
+        hoursStudied: calculatedStats.studyHours,
+        goalsCompleted: Math.floor(calculatedStats.completedTasks / 5) // Example goal metric
       });
-
     } catch (error) {
       console.error('Error fetching stats:', error);
       // Set default values in case of error
@@ -90,30 +40,13 @@ const Profile = ({ user, onClose, isOpen, onUserUpdate }) => {
     }
   };
 
-  const handleClose = () => {
-    setIsAnimating(false);
-    setTimeout(onClose, 300);
-  };
-
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
+      const formData = new FormData();
+      formData.append('image', file);
       try {
-        const formData = new FormData();
-        formData.append('image', file);
-        const token = localStorage.getItem('token');
-        
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/user/profile-image`,
-          formData,
-          { 
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            } 
-          }
-        );
-        
+        const response = await statsAPI.uploadProfileImage(formData);
         setProfileImage(response.data.imageUrl);
       } catch (error) {
         console.error('Error uploading image:', error);
@@ -125,24 +58,15 @@ const Profile = ({ user, onClose, isOpen, onUserUpdate }) => {
   const handleEditSubmit = async (event) => {
     event.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.patch(
-        `${import.meta.env.VITE_API_URL}/api/auth/update`,
-        {
-          username: event.target.username.value,
-          email: event.target.email.value
-        },
-        { 
-          headers: { 
-            Authorization: `Bearer ${token}` 
-          } 
-        }
-      );
-      
-      if (response.data) {
-        onUserUpdate(response.data);
-        setIsEditing(false);
-      }
+      await statsAPI.updateProfile({
+        username: event.target.username.value,
+        email: event.target.email.value
+      });
+      onUserUpdate({
+        username: event.target.username.value,
+        email: event.target.email.value
+      });
+      setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
       // Enhanced error handling
@@ -168,7 +92,10 @@ const Profile = ({ user, onClose, isOpen, onUserUpdate }) => {
       }`}>
         {/* Close Button */}
         <div className="absolute right-4 top-4">
-          <button onClick={handleClose} className="text-gray-400 hover:text-gray-500">
+          <button onClick={() => {
+            setIsAnimating(false);
+            setTimeout(onClose, 300);
+          }} className="text-gray-400 hover:text-gray-500">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import { authAPI } from '../utils/api';
 import booksIcon from '../assets/books-icon.png';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    fullName: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -27,14 +27,18 @@ const Register = () => {
       return;
     }
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, {
-        username: formData.fullName,
+      const response = await authAPI.register({
+        username: formData.username,
         email: formData.email,
         password: formData.password
       });
-      navigate('/login');
+      if (response.success) {
+        navigate('/dashboard');
+      } else {
+        setError(response.error);
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred');
+      setError('An error occurred during registration');
     }
   };
 
@@ -52,12 +56,12 @@ const Register = () => {
           <div className="space-y-4">
             <div>
               <input
-                name="fullName"
+                name="username"
                 type="text"
                 required
                 className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Full Name"
-                value={formData.fullName}
+                placeholder="Username"
+                value={formData.username}
                 onChange={handleChange}
               />
             </div>

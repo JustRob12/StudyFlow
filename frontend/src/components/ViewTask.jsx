@@ -1,7 +1,8 @@
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTimer } from '../context/TimerContext';
+import { tasksAPI } from '../utils/tasksApi';
+import { statsAPI } from '../utils/statsApi';
 import { getSubjectIcon } from '../utils/subjectIcons';
 import BottomBar from './BottomBar';
 import ConfirmModal from './ConfirmModal';
@@ -27,70 +28,40 @@ const ViewTask = () => {
   });
 
   useEffect(() => {
-    fetchTasks();
-    fetchUser();
-    const intervalId = setInterval(() => {
-      fetchTasks();
-      if (activeTimer?.taskId) {
-        const activeTask = tasks.find(task => task._id === activeTimer.taskId);
-        if (activeTask && !activeTask.isStarted) {
-          setTasks(prevTasks => 
-            prevTasks.map(t => ({
-              ...t,
-              isStarted: t._id === activeTimer.taskId
-            }))
-          );
-        }
-      }
-    }, 10000); // Refresh every 10 seconds
+    fetchData();
+    const intervalId = setInterval(fetchData, 10000); // Refresh every 10 seconds
     return () => clearInterval(intervalId);
   }, [activeTimer?.taskId]);
 
   useEffect(() => {
     if (activeTimer?.taskId) {
-      setTasks(prevTasks => {
-        if (prevTasks.some(t => t._id === activeTimer.taskId && !t.isStarted)) {
-          return prevTasks.map(t => ({
-            ...t,
-            isStarted: t._id === activeTimer.taskId
-          }));
-        }
-        return prevTasks;
-      });
+      setTasks(prevTasks => 
+        prevTasks.map(t => ({
+          ...t,
+          isStarted: t._id === activeTimer.taskId
+        }))
+      );
     }
-  }, [activeTimer]);
+  }, [activeTimer?.taskId]);
 
-  const fetchUser = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/user`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUser(response.data);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      navigate('/login');
-    }
-  };
-
-  const fetchTasks = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const [userResponse, tasksResponse] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/auth/user`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${import.meta.env.VITE_API_URL}/tasks`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+      const [userResponse, tasksResponse, statsResponse] = await Promise.all([
+        statsAPI.getUser(),
+        tasksAPI.getTasks(),
+        tasksAPI.getWeeklyStats()
       ]);
 
       setUser(userResponse.data);
       setTasks(tasksResponse.data);
-      calculateTaskProgress(tasksResponse.data);
+      setTaskProgress({
+        todayCompleted: statsResponse.data.todayCompleted,
+        weeklyCompleted: statsResponse.data.weeklyCompleted,
+        totalTasks: tasksResponse.data.length
+      });
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -98,115 +69,60 @@ const ViewTask = () => {
 
   const handleStartTask = async (task) => {
     try {
-      if (activeTimer?.taskId === task._id) return;
-      
-      const success = await startTimer(task._id, task.duration);
-      if (success) {
-        setTasks(prevTasks => 
-          prevTasks.map(t => ({
-            ...t,
-            isStarted: t._id === task._id
-          }))
-        );
-      }
+      await startTimer(task._id, task.duration);
+      setTasks(prevTasks =>
+        prevTasks.map(t => ({
+          ...t,
+          isStarted: t._id === task._id
+        }))
+      );
     } catch (error) {
       console.error('Error starting task:', error);
-      await fetchTasks();
     }
   };
 
-  const handleTaskComplete = async (taskId) => {
+  const handleEditTask = async (updatedTask) => {
     try {
-      const token = localStorage.getItem('token');
-      const task = tasks.find(t => t._id === taskId);
-      
-      if (!task) return;
-
-      if (activeTimer?.taskId === taskId) {
-        const timerCompleted = await completeTimer();
-        if (!timerCompleted) {
-          console.error('Failed to complete timer');
-          return;
-        }
-        localStorage.removeItem('activeTask');
-      }
-
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/history`,
-        {
-          taskId: task._id,
-          title: task.title,
-          subject: task.subject,
-          icon: task.icon,
-          startTime: new Date().toISOString(),
-          endTime: new Date().toISOString(),
-          duration: (task.duration.hours * 3600) + (task.duration.minutes * 60),
-          timeSpent: (task.duration.hours * 3600) + (task.duration.minutes * 60),
-          completed: true
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/tasks/${taskId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setCompletingTask(null);
-      setSuccessMessage({
-        show: true,
-        text: 'Task Completed Successfully',
-        icon: (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        ),
-        variant: 'success',
-        buttonText: 'Continue'
-      });
-      await fetchTasks();
-    } catch (error) {
-      console.error('Error completing task:', error);
-    }
-  };
-
-  const handleEditTask = async (editedTask) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.patch(
-        `${import.meta.env.VITE_API_URL}/tasks/${editedTask._id}`,
-        editedTask,
-        { headers: { Authorization: `Bearer ${token}` } }
+      await tasksAPI.updateTask(updatedTask._id, updatedTask);
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task._id === updatedTask._id ? updatedTask : task
+        )
       );
       setEditingTask(null);
-      await fetchTasks();
+      showSuccess('Task Updated Successfully');
     } catch (error) {
-      console.error('Error editing task:', error);
+      console.error('Error updating task:', error);
     }
   };
 
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = async () => {
+    if (!deletingTask) return;
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/tasks/${taskId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      await tasksAPI.deleteTask(deletingTask._id);
+      setTasks(prevTasks =>
+        prevTasks.filter(task => task._id !== deletingTask._id)
       );
       setDeletingTask(null);
-      setSuccessMessage({
-        show: true,
-        text: 'Task Deleted Successfully',
-        icon: (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-8 h-8">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        ),
-        variant: 'error',
-        buttonText: 'Continue'
-      });
-      await fetchTasks();
+      showSuccess('Task Deleted Successfully');
     } catch (error) {
       console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleCompleteTask = async () => {
+    if (!completingTask) return;
+    try {
+      await tasksAPI.completeTask(completingTask._id);
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task._id === completingTask._id ? { ...task, completed: true } : task
+        )
+      );
+      setCompletingTask(null);
+      showSuccess('Task Completed Successfully', 'success');
+    } catch (error) {
+      console.error('Error completing task:', error);
     }
   };
 
@@ -244,24 +160,8 @@ const ViewTask = () => {
     return taskDate > today;
   };
 
-  const calculateTaskProgress = (tasks) => {
-    const today = new Date().toISOString().split('T')[0];
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - 7);
-
-    const todayTasks = tasks.filter(task => 
-      new Date(task.date).toISOString().split('T')[0] === today
-    );
-
-    const weeklyTasks = tasks.filter(task => 
-      new Date(task.date) >= weekStart
-    );
-
-    setTaskProgress({
-      todayCompleted: todayTasks.filter(task => task.completed).length,
-      weeklyCompleted: weeklyTasks.filter(task => task.completed).length,
-      totalTasks: tasks.length
-    });
+  const calculatePercentage = (current, total) => {
+    return Math.min(Math.round((current / total) * 100), 100);
   };
 
   const getProgressColor = (current, total) => {
@@ -271,8 +171,18 @@ const ViewTask = () => {
     return 'bg-red-500';
   };
 
-  const calculatePercentage = (current, total) => {
-    return Math.min(Math.round((current / total) * 100), 100);
+  const showSuccess = (message, variant = 'success') => {
+    setSuccessMessage({
+      show: true,
+      text: message,
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      variant: variant,
+      buttonText: 'Continue'
+    });
   };
 
   if (loading) {
@@ -384,7 +294,7 @@ const ViewTask = () => {
                       <TaskTimer
                         taskId={task._id}
                         duration={task.duration}
-                        onComplete={() => handleTaskComplete(task._id)}
+                        onComplete={() => handleCompleteTask()}
                       />
                     )}
                   </div>
@@ -416,7 +326,7 @@ const ViewTask = () => {
       <ConfirmModal
         isOpen={!!deletingTask}
         onClose={() => setDeletingTask(null)}
-        onConfirm={() => handleDeleteTask(deletingTask?._id)}
+        onConfirm={handleDeleteTask}
         title="Delete Task"
         message="Are you sure you want to delete this task?"
         variant="red"
@@ -426,7 +336,7 @@ const ViewTask = () => {
       <ConfirmModal
         isOpen={!!completingTask}
         onClose={() => setCompletingTask(null)}
-        onConfirm={() => handleTaskComplete(completingTask?._id)}
+        onConfirm={handleCompleteTask}
         title="Complete Task"
         message="Are you sure you want to mark this task as complete?"
         variant="green"

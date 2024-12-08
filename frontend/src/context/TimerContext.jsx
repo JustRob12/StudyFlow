@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { timerAPI } from '../utils/timerApi';
 
 const TimerContext = createContext();
 
@@ -12,159 +13,143 @@ export const TimerProvider = ({ children }) => {
 
   // Initialize timer state
   useEffect(() => {
-    const storedState = localStorage.getItem('timerState');
+    const storedState = timerAPI.getLocalTimerState();
     if (storedState) {
-      try {
-        const state = JSON.parse(storedState);
-        const now = Date.now();
-        const elapsedTime = state.isPaused ? 0 : Math.floor((now - state.lastTick) / 1000);
-        const newTimeLeft = Math.max(0, state.timeLeft - elapsedTime);
-
-        setLocalTimeLeft(newTimeLeft);
-        setIsPaused(state.isPaused);
-        if (state.taskId && state.duration) {
-          setActiveTimer({
-            taskId: state.taskId,
-            duration: state.duration
-          });
-        }
-        lastTickRef.current = now;
-      } catch (err) {
-        console.error('Failed to restore timer state:', err);
-        localStorage.removeItem('timerState');
+      setLocalTimeLeft(storedState.timeLeft);
+      setIsPaused(storedState.isPaused);
+      if (storedState.taskId && storedState.duration) {
+        setActiveTimer({
+          taskId: storedState.taskId,
+          duration: storedState.duration
+        });
       }
+      lastTickRef.current = storedState.lastTick;
     }
   }, []);
 
   // Save timer state
   const saveTimerState = useCallback(() => {
     if (activeTimer) {
-      localStorage.setItem('timerState', JSON.stringify({
+      timerAPI.saveLocalTimerState({
         timeLeft: localTimeLeft,
         isPaused,
         taskId: activeTimer.taskId,
-        duration: activeTimer.duration,
-        lastTick: Date.now()
-      }));
+        duration: activeTimer.duration
+      });
     }
   }, [activeTimer, localTimeLeft, isPaused]);
 
-  // Handle timer countdown
-  useEffect(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    if (activeTimer && !isPaused && localTimeLeft > 0) {
+  // Start timer
+  const startTimer = useCallback(async (taskId, duration) => {
+    try {
+      await timerAPI.startTimer(taskId);
+      setActiveTimer({ taskId, duration });
+      setLocalTimeLeft(duration);
+      setIsPaused(false);
       lastTickRef.current = Date.now();
-      
+      saveTimerState();
+    } catch (err) {
+      setError('Failed to start timer');
+      console.error('Timer start error:', err);
+    }
+  }, [saveTimerState]);
+
+  // Pause timer
+  const pauseTimer = useCallback(async () => {
+    if (!activeTimer?.taskId) return;
+    try {
+      await timerAPI.pauseTimer(activeTimer.taskId);
+      setIsPaused(true);
+      saveTimerState();
+    } catch (err) {
+      setError('Failed to pause timer');
+      console.error('Timer pause error:', err);
+    }
+  }, [activeTimer, saveTimerState]);
+
+  // Resume timer
+  const resumeTimer = useCallback(async () => {
+    if (!activeTimer?.taskId) return;
+    try {
+      await timerAPI.resumeTimer(activeTimer.taskId);
+      setIsPaused(false);
+      lastTickRef.current = Date.now();
+      saveTimerState();
+    } catch (err) {
+      setError('Failed to resume timer');
+      console.error('Timer resume error:', err);
+    }
+  }, [activeTimer, saveTimerState]);
+
+  // Stop timer
+  const stopTimer = useCallback(async () => {
+    if (!activeTimer?.taskId) return;
+    try {
+      await timerAPI.stopTimer(activeTimer.taskId);
+      setActiveTimer(null);
+      setLocalTimeLeft(null);
+      setIsPaused(false);
+      timerAPI.clearLocalTimerState();
+    } catch (err) {
+      setError('Failed to stop timer');
+      console.error('Timer stop error:', err);
+    }
+  }, [activeTimer]);
+
+  // Timer tick effect
+  useEffect(() => {
+    if (activeTimer && !isPaused && localTimeLeft > 0) {
       intervalRef.current = setInterval(() => {
         const now = Date.now();
         const elapsed = Math.floor((now - lastTickRef.current) / 1000);
-        
-        if (elapsed >= 1) {
-          setLocalTimeLeft(prev => {
-            const newTimeLeft = Math.max(0, prev - elapsed);
-            lastTickRef.current = now;
-            return newTimeLeft;
-          });
-          saveTimerState();
-        }
+        lastTickRef.current = now;
+
+        setLocalTimeLeft(prev => {
+          const newTimeLeft = Math.max(0, prev - elapsed);
+          if (newTimeLeft === 0) {
+            clearInterval(intervalRef.current);
+            timerAPI.completeTimer(activeTimer.taskId).catch(err => {
+              console.error('Failed to complete timer:', err);
+            });
+          }
+          return newTimeLeft;
+        });
       }, 1000);
-    } else {
-      saveTimerState();
+
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+      };
     }
+  }, [activeTimer, isPaused, localTimeLeft]);
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [activeTimer?.taskId, isPaused, saveTimerState]);
-
-  // Check for completion
+  // Save state on changes
   useEffect(() => {
-    if (localTimeLeft === 0 && activeTimer) {
-      completeTimer();
-    }
-  }, [localTimeLeft]);
-
-  const startTimer = async (taskId, duration) => {
-    try {
-      const durationInSeconds = (duration.hours * 3600) + (duration.minutes * 60);
-      
-      setActiveTimer({
-        taskId,
-        duration: durationInSeconds
-      });
-      setLocalTimeLeft(durationInSeconds);
-      setIsPaused(false);
-      lastTickRef.current = Date.now();
-      
-      localStorage.setItem('timerState', JSON.stringify({
-        timeLeft: durationInSeconds,
-        isPaused: false,
-        taskId,
-        duration: durationInSeconds,
-        lastTick: Date.now()
-      }));
-      
-      return true;
-    } catch (error) {
-      console.error('Error starting timer:', error);
-      setError('Failed to start timer');
-      return false;
-    }
-  };
-
-  const pauseTimer = () => {
-    setIsPaused(true);
     saveTimerState();
-  };
-
-  const resumeTimer = () => {
-    setIsPaused(false);
-    lastTickRef.current = Date.now();
-    saveTimerState();
-  };
-
-  const completeTimer = () => {
-    try {
-      setActiveTimer(null);
-      setLocalTimeLeft(0);
-      setIsPaused(false);
-      localStorage.removeItem('timerState');
-      return true;
-    } catch (error) {
-      console.error('Error completing timer:', error);
-      return false;
-    }
-  };
+  }, [localTimeLeft, isPaused, saveTimerState]);
 
   const clearActiveTimer = useCallback(() => {
     setActiveTimer(null);
     setLocalTimeLeft(null);
     setIsPaused(false);
-    localStorage.removeItem('timerState');
+    timerAPI.clearLocalTimerState();
   }, []);
 
-  const value = {
-    activeTimer,
-    timeLeft: localTimeLeft,
-    isPaused,
-    error,
-    startTimer,
-    pauseTimer,
-    resumeTimer,
-    completeTimer,
-    setActiveTimer,
-    clearActiveTimer
-  };
-
   return (
-    <TimerContext.Provider value={value}>
+    <TimerContext.Provider
+      value={{
+        activeTimer,
+        localTimeLeft,
+        isPaused,
+        error,
+        startTimer,
+        pauseTimer,
+        resumeTimer,
+        stopTimer,
+        clearActiveTimer
+      }}
+    >
       {children}
     </TimerContext.Provider>
   );

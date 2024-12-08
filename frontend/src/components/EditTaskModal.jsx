@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { tasksAPI } from '../utils/tasksApi';
 import { SUBJECT_ICONS } from '../utils/subjectIcons';
 
 const EditTaskModal = ({ task, onClose, onSave }) => {
@@ -22,7 +23,7 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
     }
   }, [task]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsAnimating(false);
     const updatedTask = {
@@ -33,7 +34,12 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
         minutes: parseInt(formData.duration.minutes) || 0
       }
     };
-    setTimeout(() => onSave(updatedTask), 300);
+    try {
+      await tasksAPI.updateTask(task._id, updatedTask);
+      setTimeout(() => onSave(updatedTask), 300);
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
   };
 
   const handleClose = () => {

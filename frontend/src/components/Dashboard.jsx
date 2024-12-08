@@ -1,7 +1,7 @@
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTimer } from '../context/TimerContext';
+import { tasksAPI } from '../utils/tasksApi';
 import BottomBar from './BottomBar';
 import ConfirmModal from './ConfirmModal';
 import Header from './Header';
@@ -24,37 +24,72 @@ const Dashboard = () => {
   const [streak, setStreak] = useState(0);
   const [completedTasksTotal, setCompletedTasksTotal] = useState(0);
 
-  // Add CSS animation for the bell
-  const bellAnimation = `
-    @keyframes bellRing {
-      0% { transform: rotate(0); }
-      20% { transform: rotate(15deg); }
-      40% { transform: rotate(-15deg); }
-      60% { transform: rotate(7deg); }
-      80% { transform: rotate(-7deg); }
-      100% { transform: rotate(0); }
-    }
-    .bell-ring {
-      animation: bellRing 1s ease infinite;
-      display: inline-block;
-    }
-  `;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [
+          todayResponse,
+          completedResponse,
+          statsResponse,
+          streakResponse,
+          totalResponse,
+          userResponse,
+          historyResponse
+        ] = await Promise.all([
+          tasksAPI.getTodayTasks(),
+          tasksAPI.getCompletedTasks(),
+          tasksAPI.getWeeklyStats(),
+          tasksAPI.getStreak(),
+          tasksAPI.getCompletedTotal(),
+          tasksAPI.getUser(),
+          tasksAPI.getHistory()
+        ]);
 
-  const formatTimeLeft = (endTime) => {
-    const now = new Date().getTime();
-    const end = new Date(endTime).getTime();
-    const diff = end - now;
-    
-    if (diff <= 0) return 'Ending soon';
-    
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    
-    if (hours > 0) return `${hours}h ${minutes}m left`;
-    if (minutes > 0) return `${minutes}m ${seconds}s left`;
-    return `${seconds}s left`;
-  };
+        setUser(userResponse.data);
+        setTodayTasks(todayResponse.data);
+        setCompletedTasks(completedResponse.data);
+        setWeeklyStats(statsResponse.data);
+        setStreak(streakResponse.data.streak);
+        setCompletedTasksTotal(totalResponse.data.total);
+
+        // Calculate total completed tasks
+        const completedCount = historyResponse.data.filter(entry => entry.completed).length;
+        setCompletedTasksTotal(completedCount);
+        setCompletedTasks(historyResponse.data);
+
+        // Filter today's tasks
+        const today = new Date().toISOString().split('T')[0];
+        const todayEvents = todayResponse.data.filter(task => 
+          new Date(task.date).toISOString().split('T')[0] === today
+        );
+        setTodayTasks(todayEvents);
+
+        // Process history for weekly stats
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        const weekHistory = historyResponse.data.filter(entry => 
+          new Date(entry.endTime) >= weekStart
+        );
+        
+        const totalHours = weekHistory.reduce((acc, entry) => acc + (entry.timeSpent / 3600), 0);
+        const uniqueSubjects = new Set(weekHistory.map(entry => entry.subject));
+        
+        setWeeklyStats(prev => ({
+          ...prev,
+          studyHours: Math.round(totalHours),
+          subjects: uniqueSubjects
+        }));
+
+        // Calculate streak from history
+        const currentStreak = calculateStreak(historyResponse.data);
+        setStreak(currentStreak);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, [navigate]);
 
   // Add this function to calculate streak
   const calculateStreak = (historyData) => {
@@ -91,82 +126,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const [userResponse, tasksResponse, historyResponse] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/auth/user`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${import.meta.env.VITE_API_URL}/tasks`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${import.meta.env.VITE_API_URL}/history`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
-
-        setUser(userResponse.data);
-        setTasks(tasksResponse.data);
-
-        // Calculate total completed tasks
-        const completedCount = historyResponse.data.filter(entry => entry.completed).length;
-        setCompletedTasksTotal(completedCount);
-        setCompletedTasks(historyResponse.data);
-
-        // Filter today's tasks
-        const today = new Date().toISOString().split('T')[0];
-        const todayEvents = tasksResponse.data.filter(task => 
-          new Date(task.date).toISOString().split('T')[0] === today
-        );
-        setTodayTasks(todayEvents);
-
-        // Process history for weekly stats
-        const weekStart = new Date();
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-        const weekHistory = historyResponse.data.filter(entry => 
-          new Date(entry.endTime) >= weekStart
-        );
-        
-        const totalHours = weekHistory.reduce((acc, entry) => acc + (entry.timeSpent / 3600), 0);
-        const uniqueSubjects = new Set(weekHistory.map(entry => entry.subject));
-        
-        setWeeklyStats(prev => ({
-          ...prev,
-          studyHours: Math.round(totalHours),
-          subjects: uniqueSubjects
-        }));
-
-        // Calculate streak from history
-        const currentStreak = calculateStreak(historyResponse.data);
-        setStreak(currentStreak);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  // Add this effect to sync with active timer
-  useEffect(() => {
     if (activeTimer?.taskId) {
       const fetchActiveTask = async () => {
         try {
-          const token = localStorage.getItem('token');
-          
-          // First, check if the task exists in our current tasks array
-          const existingTask = tasks.find(t => t._id === activeTimer.taskId);
-          if (existingTask) {
-            return; // Task already exists in our state, no need to fetch
-          }
-
-          const response = await axios.get(
-            `${import.meta.env.VITE_API_URL}/tasks/${activeTimer.taskId}`,
-            {
-              headers: { Authorization: `Bearer ${token}` }
-            }
-          );
+          const response = await tasksAPI.getTask(activeTimer.taskId);
           
           if (response.data) {
             setTasks(prevTasks => [...prevTasks, response.data]);
@@ -174,14 +137,9 @@ const Dashboard = () => {
         } catch (error) {
           if (error.response?.status === 404) {
             // Task doesn't exist anymore, clean up the timer
-            const token = localStorage.getItem('token');
             try {
               // Stop the timer on the backend
-              await axios.post(
-                `${import.meta.env.VITE_API_URL}/timers/pause`,
-                { taskId: activeTimer.taskId },
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
+              await tasksAPI.pauseTimer(activeTimer.taskId);
               
               // Clear the active timer from context
               if (typeof clearActiveTimer === 'function') {
@@ -237,7 +195,22 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col h-screen bg-[#f8f9fb]">
-      <style>{bellAnimation}</style>
+      <style>
+        {`
+          @keyframes bellRing {
+            0% { transform: rotate(0); }
+            20% { transform: rotate(15deg); }
+            40% { transform: rotate(-15deg); }
+            60% { transform: rotate(7deg); }
+            80% { transform: rotate(-7deg); }
+            100% { transform: rotate(0); }
+          }
+          .bell-ring {
+            animation: bellRing 1s ease infinite;
+            display: inline-block;
+          }
+        `}
+      </style>
       
       {/* Fixed Header */}
       <div className="flex-none">
@@ -273,7 +246,7 @@ const Dashboard = () => {
                 <span className="text-purple-500">⏱️</span>
               </div>
               {activeTimer ? (
-                <>
+                <div>
                   <div className="text-lg font-bold text-purple-600 truncate mb-1">
                     {tasks.find(t => t._id === activeTimer.taskId)?.title || 'Loading...'}
                   </div>
@@ -287,12 +260,12 @@ const Dashboard = () => {
                       // Handle timer completion if needed
                     }}
                   />
-                </>
+                </div>
               ) : (
-                <>
+                <div>
                   <p className="text-lg font-bold text-purple-600 mb-1">No active session</p>
                   <p className="text-xs text-gray-400">Start a task to begin</p>
-                </>
+                </div>
               )}
             </div>
 
@@ -456,8 +429,6 @@ const Dashboard = () => {
           .animate-slideFromLeft {
             animation: slideFromLeft 0.3s ease-out forwards;
           }
-
-          ${bellAnimation}
         `}
       </style>
     </div>
