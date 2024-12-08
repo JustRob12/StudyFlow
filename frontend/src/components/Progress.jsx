@@ -1,6 +1,9 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
 import React, { useState, useEffect } from 'react';
@@ -20,10 +23,14 @@ import {
 } from 'chart.js';
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { statsAPI, goalsAPI } from '../utils/api';
 import BottomBar from './BottomBar';
+=======
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 >>>>>>> parent of fabc826 (second commit)
@@ -64,8 +71,11 @@ const Progress = () => {
       try {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         setLoading(true);
 =======
+=======
+>>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
         const token = localStorage.getItem('token');

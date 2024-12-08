@@ -1,10 +1,15 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTimer } from '../context/TimerContext';
 import { apiEndpoints } from '../utils/api';
 import { getSubjectIcon } from '../utils/subjectIcons';
+=======
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -26,6 +31,7 @@ const ViewTask = () => {
   const [activeTimer, setActiveTimer] = useState(null);
 
   useEffect(() => {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     fetchData();
@@ -60,6 +66,11 @@ const ViewTask = () => {
   }, []);
 
 >>>>>>> parent of fabc826 (second commit)
+=======
+    fetchUserAndTasks();
+  }, []);
+
+>>>>>>> parent of fabc826 (second commit)
   const fetchUserAndTasks = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -75,6 +86,7 @@ const ViewTask = () => {
       
       setUser(userResponse.data);
       setTasks(tasksResponse.data);
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       setTaskProgress({
@@ -95,10 +107,16 @@ const ViewTask = () => {
     } catch (error) {
       console.error('Error fetching data:', error);
 >>>>>>> parent of fabc826 (second commit)
+=======
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+>>>>>>> parent of fabc826 (second commit)
       setLoading(false);
     }
   };
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   const handleStartTask = async (task) => {
@@ -378,6 +396,86 @@ const ViewTask = () => {
   };
 
 >>>>>>> parent of fabc826 (second commit)
+=======
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    
+    // Check if the date is today
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    }
+    
+    // Calculate remaining days
+    const diffTime = date.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 0) {
+      return `${diffDays} day${diffDays === 1 ? '' : 's'} remaining`;
+    }
+
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getSubjectIcon = (subjectId) => {
+    const subjects = {
+      math: '📐',
+      science: '🔬',
+      literature: '📚',
+      history: '🏛️',
+      language: '💭',
+      art: '🎨',
+      music: '🎵',
+      pe: '⚽'
+    };
+    return subjects[subjectId] || '📚';
+  };
+
+  const formatDuration = (duration) => {
+    const hours = duration.hours > 0 ? `${duration.hours}h` : '';
+    const minutes = duration.minutes > 0 ? `${duration.minutes}m` : '';
+    return `${hours} ${minutes}`.trim() || '0m';
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`${import.meta.env.VITE_API_URL}/tasks/${taskId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setTasks(tasks.filter(task => task._id !== taskId));
+      } catch (error) {
+        console.error('Error deleting task:', error);
+      }
+    }
+  };
+
+  const handleEditTask = async (taskId, updatedData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `${import.meta.env.VITE_API_URL}/tasks/${taskId}`,
+        updatedData,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setTasks(tasks.map(task => 
+        task._id === taskId ? response.data : task
+      ));
+      setEditingTask(null);
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
+>>>>>>> parent of fabc826 (second commit)
   const handleTaskComplete = async (taskId) => {
     if (window.confirm('Are you sure you want to mark this task as complete?')) {
       try {
@@ -419,6 +517,9 @@ const ViewTask = () => {
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of fabc826 (second commit)
+=======
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
@@ -469,6 +570,7 @@ const ViewTask = () => {
                   </div>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                   
                   <div className="flex justify-between items-center mt-4 border-t pt-4">
                     <div>
@@ -507,6 +609,8 @@ const ViewTask = () => {
 =======
 =======
 >>>>>>> parent of fabc826 (second commit)
+=======
+>>>>>>> parent of fabc826 (second commit)
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleTaskComplete(task._id)}
@@ -536,6 +640,9 @@ const ViewTask = () => {
                       </svg>
                     </button>
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of fabc826 (second commit)
+=======
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
@@ -575,6 +682,7 @@ const ViewTask = () => {
           onSave={handleEditTask}
         />
       )}
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 
@@ -657,6 +765,8 @@ const ViewTask = () => {
           }
         `}
       </style>
+=======
+>>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
 =======

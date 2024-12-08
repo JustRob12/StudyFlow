@@ -1,8 +1,12 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { useEffect, useState } from 'react';
 import { tasksAPI } from '../utils/api';
 import { SUBJECT_ICONS } from '../utils/subjectIcons';
+=======
+import { useState, useEffect } from 'react';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import { useState, useEffect } from 'react';
 >>>>>>> parent of fabc826 (second commit)
@@ -33,6 +37,7 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
     e.preventDefault();
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     setIsAnimating(false);
     const updatedTask = {
       ...task,
@@ -48,6 +53,9 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
     } catch (error) {
       console.error('Error updating task:', error);
     }
+=======
+    onSave(task._id, formData);
+>>>>>>> parent of fabc826 (second commit)
 =======
     onSave(task._id, formData);
 >>>>>>> parent of fabc826 (second commit)

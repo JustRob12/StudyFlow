@@ -1,8 +1,11 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
+=======
+>>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
 =======
@@ -41,6 +44,7 @@ const corsOptions = {
 };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Add this before your routes
 app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
 app.use(cors(corsOptions));
@@ -61,12 +65,15 @@ app.use((req, res, next) => {
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
+=======
+>>>>>>> parent of fabc826 (second commit)
 // Routes
 app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/timers', timerRoutes);
 app.use('/history', historyRoutes);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 // Test route
@@ -138,11 +145,27 @@ app.use((err, req, res, next) => {
 });
 
 >>>>>>> parent of fabc826 (second commit)
+=======
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
+>>>>>>> parent of fabc826 (second commit)
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of fabc826 (second commit)
+=======
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
