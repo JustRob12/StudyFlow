@@ -4,32 +4,40 @@ export const tasksAPI = {
   // Get all tasks
   getTasks: () => api.get('/tasks'),
   
-  // Get today's tasks
-  getTodayTasks: () => api.get('/tasks/today'),
-  
-  // Get completed tasks
-  getCompletedTasks: () => api.get('/tasks/completed'),
+  // Get a single task
+  getTask: (taskId) => api.get(`/tasks/${taskId}`),
   
   // Create a new task
   createTask: (taskData) => api.post('/tasks', taskData),
   
   // Update a task
-  updateTask: (taskId, taskData) => api.put(`/tasks/${taskId}`, taskData),
+  updateTask: (taskId, taskData) => api.patch(`/tasks/${taskId}`, taskData),
   
   // Delete a task
   deleteTask: (taskId) => api.delete(`/tasks/${taskId}`),
   
-  // Complete a task
-  completeTask: (taskId) => api.put(`/tasks/${taskId}/complete`),
-  
-  // Get weekly stats
-  getWeeklyStats: () => api.get('/tasks/stats/weekly'),
-  
-  // Get user streak
-  getStreak: () => api.get('/tasks/stats/streak'),
-  
-  // Get total completed tasks
-  getCompletedTotal: () => api.get('/tasks/stats/completed-total')
+  // Complete a task and create history entry
+  completeTask: async (taskId) => {
+    const task = await api.get(`/tasks/${taskId}`);
+    const totalSeconds = (task.data.duration.hours * 3600) + (task.data.duration.minutes * 60);
+    
+    // Create history entry
+    await api.post('/history', {
+      taskId,
+      title: task.data.title,
+      subject: task.data.subject,
+      icon: task.data.icon,
+      startTime: new Date().toISOString(),
+      endTime: new Date().toISOString(),
+      duration: totalSeconds,
+      timeSpent: totalSeconds,
+      completed: true,
+      status: 'completed'
+    });
+    
+    // Delete the completed task
+    return api.delete(`/tasks/${taskId}`);
+  }
 };
 
 export default tasksAPI;

@@ -1,23 +1,17 @@
 import api from './api';
 
 export const timerAPI = {
-  // Start a timer for a task
+  // Start or resume a timer for a task
   startTimer: (taskId) => api.post('/timers/start', { taskId }),
   
   // Pause a timer
   pauseTimer: (taskId) => api.post('/timers/pause', { taskId }),
   
-  // Resume a timer
-  resumeTimer: (taskId) => api.post('/timers/resume', { taskId }),
-  
-  // Stop a timer
-  stopTimer: (taskId) => api.post('/timers/stop', { taskId }),
-  
   // Get timer status
-  getTimerStatus: (taskId) => api.get(`/timers/${taskId}/status`),
+  getTimerStatus: (taskId) => api.get(`/timers/${taskId}`),
   
   // Update timer progress
-  updateProgress: (taskId, timeSpent) => api.put(`/timers/${taskId}/progress`, { timeSpent }),
+  updateProgress: (taskId, timeSpent) => api.post(`/timers/${taskId}/update`, { timeSpent }),
   
   // Complete a timer
   completeTimer: (taskId) => api.post(`/timers/${taskId}/complete`),
@@ -49,8 +43,7 @@ export const timerAPI = {
         lastTick: now
       };
     } catch (err) {
-      console.error('Failed to parse timer state:', err);
-      localStorage.removeItem('timerState');
+      console.error('Error parsing timer state:', err);
       return null;
     }
   },
@@ -59,3 +52,5 @@ export const timerAPI = {
     localStorage.removeItem('timerState');
   }
 };
+
+export default timerAPI;
