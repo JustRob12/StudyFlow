@@ -1,9 +1,14 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import { goalsAPI, statsAPI } from '../utils/api';
 import BottomBar from './BottomBar';
+=======
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -44,12 +49,15 @@ const Goals = () => {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       setLoading(true);
       const [userResponse, historyResponse, goalsResponse] = await Promise.all([
         statsAPI.getUser(),
         statsAPI.getHistory(),
         goalsAPI.getGoals()
 =======
+=======
+>>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
 =======

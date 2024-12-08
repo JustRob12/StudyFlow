@@ -1,8 +1,13 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { timerAPI } from '../utils/api';
+=======
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+>>>>>>> parent of fabc826 (second commit)
 =======
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
@@ -24,6 +29,7 @@ export const TimerProvider = ({ children }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(Date.now());
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -295,6 +301,33 @@ export const TimerProvider = ({ children }) => {
       if (activeTimer && !isPaused) {
         const now = Date.now();
 >>>>>>> parent of fabc826 (second commit)
+=======
+  // Function to fetch timer from server
+  const fetchActiveTimer = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/timers/active`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data) {
+        setActiveTimer(response.data);
+        setLocalTimeLeft(response.data.timeRemaining);
+        setIsPaused(false);
+        setLastUpdate(Date.now());
+      }
+    } catch (error) {
+      console.error('Error fetching timer:', error);
+    }
+  }, []);
+
+  // Update timer when window gains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (activeTimer && !isPaused) {
+        const now = Date.now();
+>>>>>>> parent of fabc826 (second commit)
         const elapsedSeconds = Math.floor((now - lastUpdate) / 1000);
         setLocalTimeLeft(prev => Math.max(0, prev - elapsedSeconds));
         setLastUpdate(now);
@@ -345,6 +378,9 @@ export const TimerProvider = ({ children }) => {
       const adjustedTimeLeft = Math.max(0, state.timeLeft - (state.isPaused ? 0 : elapsedSeconds));
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of fabc826 (second commit)
+=======
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
@@ -534,6 +570,9 @@ export const TimerProvider = ({ children }) => {
     }}>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of fabc826 (second commit)
+=======
 >>>>>>> parent of fabc826 (second commit)
 =======
 >>>>>>> parent of fabc826 (second commit)
