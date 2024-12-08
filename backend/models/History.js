@@ -17,10 +17,6 @@ const historySchema = new mongoose.Schema({
   description: {
     type: String
   },
-  icon: {
-    type: String,
-    default: '📚'
-  },
   startTime: {
     type: Date,
     required: true

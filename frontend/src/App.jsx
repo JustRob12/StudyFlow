@@ -1,13 +1,13 @@
-import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom'
-import Dashboard from './components/Dashboard'
-import Goals from './components/Goals'
-import History from './components/History'
+import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './components/Login'
-import Profile from './components/Profile'
-import Progress from './components/Progress'
 import Register from './components/Register'
+import Dashboard from './components/Dashboard'
 import Settings from './components/Settings'
 import ViewTask from './components/ViewTask'
+import History from './components/History'
+import Progress from './components/Progress';
+import Goals from './components/Goals';
 import { TimerProvider } from './context/TimerContext'
 
 function App() {
@@ -24,7 +24,6 @@ function App() {
           <Route path="/history" element={<History />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/goals" element={<Goals />} />
-          <Route path="/profile" element={<Profile />} />
         </Routes>
       </Router>
     </TimerProvider>

@@ -1,6 +1,7 @@
 import express from 'express';
-import auth from '../middleware/auth.js';
 import History from '../models/History.js';
+import auth from '../middleware/auth.js';
+import Task from '../models/Task.js';
 
 const router = express.Router();
 
@@ -22,7 +23,6 @@ router.post('/', auth, async (req, res) => {
       taskId, 
       title, 
       description,
-      icon,
       startTime, 
       endTime, 
       duration,
@@ -36,7 +36,6 @@ router.post('/', auth, async (req, res) => {
       taskId,
       title,
       description,
-      icon,
       startTime,
       endTime,
       duration,  // Original planned duration
@@ -65,16 +64,6 @@ router.get('/:id', auth, async (req, res) => {
     }
 
     res.json(historyEntry);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Add this new route for deleting all history
-router.delete('/', auth, async (req, res) => {
-  try {
-    await History.deleteMany({ userId: req.userId });
-    res.status(200).json({ message: 'All history deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

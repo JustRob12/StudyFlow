@@ -1,12 +1,17 @@
+<<<<<<< HEAD
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
+=======
+>>>>>>> parent of fabc826 (second commit)
 import express from 'express';
 import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
-import historyRoutes from './routes/history.js';
 import taskRoutes from './routes/tasks.js';
 import timerRoutes from './routes/timers.js';
+import historyRoutes from './routes/history.js';
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +45,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
+<<<<<<< HEAD
 // Debug middleware to log requests
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);
@@ -47,12 +53,15 @@ app.use((req, res, next) => {
   next();
 });
 
+=======
+>>>>>>> parent of fabc826 (second commit)
 // Routes
 app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/timers', timerRoutes);
 app.use('/history', historyRoutes);
 
+<<<<<<< HEAD
 // Test route
 app.get('/test', (req, res) => {
   res.json({ message: 'API is working' });
@@ -97,3 +106,20 @@ const startServer = async () => {
 };
 
 startServer();
+=======
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+>>>>>>> parent of fabc826 (second commit)

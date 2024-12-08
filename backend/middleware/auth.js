@@ -4,13 +4,12 @@ const auth = async (req, res, next) => {
   try {
     // Get token from Authorization header
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    console.log('Auth Middleware - Received token:', token ? 'Present' : 'Missing');
     
     if (!token) {
-      console.log('Auth Middleware - No token provided');
       return res.status(401).json({ message: 'No authentication token, access denied' });
     }
 
+<<<<<<< HEAD
     try {
       // Verify token
       const verified = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
@@ -43,6 +42,13 @@ const auth = async (req, res, next) => {
   } catch (err) {
     console.error('Auth Middleware - Unexpected error:', err);
     res.status(500).json({ message: 'Internal server error in authentication' });
+=======
+    const verified = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    req.userId = verified.id;
+    next();
+  } catch (err) {
+    res.status(401).json({ message: 'Token verification failed, authorization denied' });
+>>>>>>> parent of fabc826 (second commit)
   }
 };
 

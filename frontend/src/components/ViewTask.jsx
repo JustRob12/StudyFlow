@@ -1,13 +1,16 @@
+<<<<<<< HEAD
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTimer } from '../context/TimerContext';
 import { apiEndpoints } from '../utils/api';
 import { getSubjectIcon } from '../utils/subjectIcons';
+=======
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+>>>>>>> parent of fabc826 (second commit)
 import BottomBar from './BottomBar';
-import ConfirmModal from './ConfirmModal';
-import EditTaskModal from './EditTaskModal';
 import Header from './Header';
-import SuccessModal from './SuccessModal';
+import EditTaskModal from './EditTaskModal';
 import TaskTimer from './TaskTimer';
 
 const ViewTask = () => {
@@ -15,18 +18,10 @@ const ViewTask = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
-  const [deletingTask, setDeletingTask] = useState(null);
-  const [completingTask, setCompletingTask] = useState(null);
-  const [successMessage, setSuccessMessage] = useState({ show: false, text: '', icon: null, variant: null, buttonText: null });
-  const navigate = useNavigate();
-  const { startTimer, activeTimer, completeTimer } = useTimer();
-  const [taskProgress, setTaskProgress] = useState({
-    todayCompleted: 0,
-    weeklyCompleted: 0,
-    totalTasks: 0
-  });
+  const [activeTimer, setActiveTimer] = useState(null);
 
   useEffect(() => {
+<<<<<<< HEAD
     fetchData();
     const intervalId = setInterval(fetchData, 10000); // Refresh every 10 seconds
     return () => clearInterval(intervalId);
@@ -50,10 +45,26 @@ const ViewTask = () => {
         apiEndpoints.stats.getUser(),
         apiEndpoints.tasks.getTasks(),
         apiEndpoints.tasks.getWeeklyStats()
-      ]);
+=======
+    fetchUserAndTasks();
+  }, []);
 
+  const fetchUserAndTasks = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const [userResponse, tasksResponse] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_API_URL}/auth/user`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/tasks`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+>>>>>>> parent of fabc826 (second commit)
+      ]);
+      
       setUser(userResponse.data);
       setTasks(tasksResponse.data);
+<<<<<<< HEAD
       setTaskProgress({
         todayCompleted: statsResponse.data.todayCompleted,
         weeklyCompleted: statsResponse.data.weeklyCompleted,
@@ -62,10 +73,16 @@ const ViewTask = () => {
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
+=======
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+>>>>>>> parent of fabc826 (second commit)
       setLoading(false);
     }
   };
 
+<<<<<<< HEAD
   const handleStartTask = async (task) => {
     try {
       await startTimer(task._id, task.duration);
@@ -184,83 +201,172 @@ const ViewTask = () => {
     });
   };
 
+=======
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    
+    // Check if the date is today
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    }
+    
+    // Calculate remaining days
+    const diffTime = date.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 0) {
+      return `${diffDays} day${diffDays === 1 ? '' : 's'} remaining`;
+    }
+
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getSubjectIcon = (subjectId) => {
+    const subjects = {
+      math: '📐',
+      science: '🔬',
+      literature: '📚',
+      history: '🏛️',
+      language: '💭',
+      art: '🎨',
+      music: '🎵',
+      pe: '⚽'
+    };
+    return subjects[subjectId] || '📚';
+  };
+
+  const formatDuration = (duration) => {
+    const hours = duration.hours > 0 ? `${duration.hours}h` : '';
+    const minutes = duration.minutes > 0 ? `${duration.minutes}m` : '';
+    return `${hours} ${minutes}`.trim() || '0m';
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`${import.meta.env.VITE_API_URL}/tasks/${taskId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setTasks(tasks.filter(task => task._id !== taskId));
+      } catch (error) {
+        console.error('Error deleting task:', error);
+      }
+    }
+  };
+
+  const handleEditTask = async (taskId, updatedData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `${import.meta.env.VITE_API_URL}/tasks/${taskId}`,
+        updatedData,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setTasks(tasks.map(task => 
+        task._id === taskId ? response.data : task
+      ));
+      setEditingTask(null);
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
+  const handleTaskComplete = async (taskId) => {
+    if (window.confirm('Are you sure you want to mark this task as complete?')) {
+      try {
+        const token = localStorage.getItem('token');
+        const task = tasks.find(t => t._id === taskId);
+        
+        // First, create history entry
+        await axios.post(
+          `${import.meta.env.VITE_API_URL}/history`,
+          {
+            taskId: task._id,
+            title: task.title,
+            description: task.description,
+            subject: task.subject || 'General',  
+            startTime: new Date().toISOString(),
+            endTime: new Date().toISOString(),
+            duration: task.duration.hours * 3600 + task.duration.minutes * 60,
+            timeSpent: task.duration.hours * 3600 + task.duration.minutes * 60,
+            completed: true,
+            status: 'completed'
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        // Then delete the task
+        await axios.delete(`${import.meta.env.VITE_API_URL}/tasks/${taskId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        // Update local state
+        setTasks(tasks.filter(t => t._id !== taskId));
+        setActiveTimer(null);
+      } catch (error) {
+        console.error('Error completing task:', error);
+      }
+    }
+  };
+
+>>>>>>> parent of fabc826 (second commit)
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-t-blue-500 border-b-blue-500 rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600">Loading tasks...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Fixed Header */}
-      <div className="flex-none">
-        <Header user={user} />
-      </div>
-
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
-        <main className="animate-slideFromRight">
-          <div className="sticky top-0 bg-white shadow z-40">
-            <div className="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between mb-3">
-                <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-              </div>
-              <p className="text-sm text-gray-500">
-                {tasks.length} {tasks.length === 1 ? 'Task' : 'Tasks'} available
-              </p>
-            </div>
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <Header user={user} />
+      <div className="max-w-lg mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-6 text-gray-800">Your Tasks</h1>
+        
+        {tasks.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No tasks yet. Add your first task!</p>
           </div>
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-24">
-            {/* Task list content */}
-            <div className="space-y-4">
-              {tasks.map((task) => (
-                <div key={task._id} className="bg-[#d0efff] rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
+        ) : (
+          <div className="space-y-4">
+            {tasks.map((task) => (
+              <div
+                key={task._id}
+                className={`bg-white rounded-xl p-4 shadow-sm border ${
+                  new Date(task.date).toDateString() === new Date().toDateString()
+                    ? 'border-blue-500 ring-2 ring-blue-100'
+                    : 'border-gray-100'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center space-x-2">
                       <span className="text-2xl">{getSubjectIcon(task.subject)}</span>
-                      <div>
-                        <h3 className="text-lg font-semibold">{task.title}</h3>
-                        <p className="text-gray-500 mt-1">
-                          Duration: {formatDuration(task.duration)}
-                        </p>
-                        <p className="text-gray-500">
-                          {formatDate(task.date)}
-                        </p>
-                      </div>
+                      <h3 className="text-lg font-semibold">{task.title}</h3>
                     </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => setEditingTask(task)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
-                        title="Edit Task"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => setDeletingTask(task)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-full"
-                        title="Delete Task"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => setCompletingTask(task)}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-full"
-                        title="Complete Task"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </button>
-                    </div>
+                    <p className="text-gray-500 mt-1">
+                      Duration: {formatDuration(task.duration)}
+                    </p>
+                    <p className="text-gray-500">
+                      {formatDate(task.date)}
+                    </p>
                   </div>
+<<<<<<< HEAD
                   
                   <div className="flex justify-between items-center mt-4 border-t pt-4">
                     <div>
@@ -296,30 +402,73 @@ const ViewTask = () => {
                         onComplete={() => handleCompleteTask()}
                       />
                     )}
+=======
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleTaskComplete(task._id)}
+                      className="p-2 text-green-600 hover:bg-green-50 rounded-full"
+                      title="Complete Task"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setEditingTask(task)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
+                      title="Edit Task"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTask(task._id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-full"
+                      title="Delete Task"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                      </svg>
+                    </button>
+>>>>>>> parent of fabc826 (second commit)
                   </div>
                 </div>
-              ))}
-            </div>
+                
+                {new Date(task.date).toDateString() === new Date().toDateString() && !task.completed && (
+                  <div className="mt-4 border-t pt-4">
+                    <TaskTimer 
+                      taskId={task._id}
+                      duration={task.duration}
+                      onComplete={() => handleTaskComplete(task._id)}
+                    />
+                  </div>
+                )}
+                
+                {task.completed && (
+                  <div className="mt-4 text-center">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Completed
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        </main>
+        )}
       </div>
-
-      {/* Fixed Bottom Navigation */}
-      <div className="flex-none">
-        <BottomBar />
-      </div>
-
+      <BottomBar />
       {editingTask && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-          <div className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl transform transition-transform duration-300 ease-out">
-            <EditTaskModal
-              task={editingTask}
-              onClose={() => setEditingTask(null)}
-              onSave={handleEditTask}
-            />
-          </div>
-        </div>
+        <EditTaskModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onSave={handleEditTask}
+        />
       )}
+<<<<<<< HEAD
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
@@ -400,6 +549,8 @@ const ViewTask = () => {
           }
         `}
       </style>
+=======
+>>>>>>> parent of fabc826 (second commit)
     </div>
   );
 };

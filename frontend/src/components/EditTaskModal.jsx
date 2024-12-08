@@ -1,9 +1,12 @@
+<<<<<<< HEAD
 import { useEffect, useState } from 'react';
 import { tasksAPI } from '../utils/api';
 import { SUBJECT_ICONS } from '../utils/subjectIcons';
+=======
+import { useState, useEffect } from 'react';
+>>>>>>> parent of fabc826 (second commit)
 
 const EditTaskModal = ({ task, onClose, onSave }) => {
-  const [isAnimating, setIsAnimating] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     subject: '',
@@ -11,20 +14,20 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
     duration: { hours: 0, minutes: 0 }
   });
 
-  const subjects = Object.keys(SUBJECT_ICONS).filter(subject => subject !== 'Default');
-
   useEffect(() => {
     if (task) {
-      setIsAnimating(true);
       setFormData({
-        ...task,
-        date: new Date(task.date).toISOString().split('T')[0]
+        title: task.title,
+        subject: task.subject,
+        date: new Date(task.date).toISOString().split('T')[0],
+        duration: task.duration
       });
     }
   }, [task]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+<<<<<<< HEAD
     setIsAnimating(false);
     const updatedTask = {
       ...task,
@@ -40,106 +43,110 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
     } catch (error) {
       console.error('Error updating task:', error);
     }
+=======
+    onSave(task._id, formData);
+>>>>>>> parent of fabc826 (second commit)
   };
-
-  const handleClose = () => {
-    setIsAnimating(false);
-    setTimeout(onClose, 300);
-  };
-
-  if (!task && !isAnimating) return null;
 
   return (
-    <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity duration-300 ${
-      isAnimating ? 'opacity-100' : 'opacity-0 pointer-events-none'
-    }`}>
-      <div className={`fixed inset-x-0 bottom-0 bg-white rounded-t-3xl p-6 transform transition-transform duration-300 ease-out ${
-        isAnimating ? 'translate-y-0' : 'translate-y-full'
-      }`}>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Edit Task</h2>
-          <button onClick={handleClose} className="text-gray-400 hover:text-gray-500">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">Edit Task</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-500"
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-4 py-2 border rounded-lg"
-            placeholder="Task Title"
-            required
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Title</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
+          </div>
 
-          <select
-            value={formData.subject}
-            onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-            className="w-full px-4 py-2 border rounded-lg"
-            required
-          >
-            <option value="">Select Subject</option>
-            {subjects.map((subject) => (
-              <option key={subject} value={subject}>
-                {SUBJECT_ICONS[subject]} {subject}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Subject</label>
+            <select
+              value={formData.subject}
+              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            >
+              <option value="">Select a subject</option>
+              <option value="math">Math</option>
+              <option value="science">Science</option>
+              <option value="literature">Literature</option>
+              <option value="history">History</option>
+              <option value="language">Language</option>
+              <option value="art">Art</option>
+              <option value="music">Music</option>
+              <option value="pe">PE</option>
+            </select>
+          </div>
 
-          <div className="flex space-x-4">
-            <div className="relative w-1/2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Date</label>
+            <input
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700">Hours</label>
               <input
                 type="number"
+                min="0"
                 value={formData.duration.hours}
                 onChange={(e) => setFormData({
                   ...formData,
                   duration: { ...formData.duration, hours: parseInt(e.target.value) || 0 }
                 })}
-                className="w-full px-4 py-2 border rounded-lg pr-12"
-                placeholder="Hours"
-                min="0"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">hr</span>
             </div>
-            <div className="relative w-1/2">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700">Minutes</label>
               <input
                 type="number"
+                min="0"
+                max="59"
                 value={formData.duration.minutes}
                 onChange={(e) => setFormData({
                   ...formData,
                   duration: { ...formData.duration, minutes: parseInt(e.target.value) || 0 }
                 })}
-                className="w-full px-4 py-2 border rounded-lg pr-14"
-                placeholder="Minutes"
-                min="0"
-                max="59"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">min</span>
             </div>
           </div>
 
-          <input
-            type="date"
-            value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            className="w-full px-4 py-2 border rounded-lg"
-            required
-          />
-
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end gap-3 mt-6">
             <button
               type="button"
-              onClick={handleClose}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
             >
               Save Changes
             </button>
@@ -150,4 +157,4 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
   );
 };
 
-export default EditTaskModal;
+export default EditTaskModal; 
