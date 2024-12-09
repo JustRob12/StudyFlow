@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SuccessModal from './SuccessModal';
 
 const Profile = ({ isOpen, onClose }) => {
   const [user, setUser] = useState(null);
@@ -13,11 +12,12 @@ const Profile = ({ isOpen, onClose }) => {
     email: ''
   });
   const [stats, setStats] = useState({
-    tasksCompleted: 0,
     hoursStudied: 0,
-    streak: 0
+    tasksCompleted: 0,
+    goalsCompleted: 0
   });
   const [successMessage, setSuccessMessage] = useState({ show: false, text: '' });
+  const [selectedImage, setSelectedImage] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,21 +47,62 @@ const Profile = ({ isOpen, onClose }) => {
         email: userResponse.data.email
       });
 
-      const totalTasks = historyResponse.data.length;
-      const totalHours = historyResponse.data.reduce((acc, entry) => 
+      const historyData = historyResponse.data;
+
+      // Calculate total hours studied
+      const totalHours = historyData.reduce((acc, entry) => 
         acc + ((entry.timeSpent || 0) / 3600), 0
       );
 
+      // Get completed tasks count
+      const completedTasks = historyData.filter(entry => entry.completed).length;
+
+      // Calculate goals completed (tasks that met their target duration)
+      const goalsCompleted = historyData.filter(entry => {
+        const targetDuration = (entry.duration?.hours || 0) * 3600 + (entry.duration?.minutes || 0) * 60;
+        const actualDuration = entry.timeSpent || 0;
+        return entry.completed && actualDuration >= targetDuration;
+      }).length;
+
       setStats({
-        tasksCompleted: totalTasks,
         hoursStudied: Number(totalHours.toFixed(1)),
-        streak: userResponse.data.streak || 0
+        tasksCompleted: completedTasks,
+        goalsCompleted: goalsCompleted
       });
     } catch (error) {
       console.error('Error fetching user data:', error);
-      navigate('/login');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append('profileImage', file);
+        
+        const token = localStorage.getItem('token');
+        await axios.post(
+          `${import.meta.env.VITE_API_URL}/auth/upload-profile-image`,
+          formData,
+          { 
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            } 
+          }
+        );
+
+        setSuccessMessage({
+          show: true,
+          text: 'Profile photo updated successfully!'
+        });
+        fetchUserData();
+      } catch (error) {
+        console.error('Error uploading image:', error);
+      }
     }
   };
 
@@ -91,22 +132,20 @@ const Profile = ({ isOpen, onClose }) => {
     }
   };
 
-  if (!isOpen && !isAnimating) return null;
-
   return (
     <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity duration-300 ${
       isAnimating ? 'opacity-100' : 'opacity-0 pointer-events-none'
     }`}>
-      <div className={`fixed inset-x-0 bottom-0 bg-white rounded-t-3xl p-6 transform transition-transform duration-300 ease-out ${
+      <div className={`fixed inset-x-0 bottom-0 bg-white rounded-t-3xl transform transition-transform duration-300 ease-out ${
         isAnimating ? 'translate-y-0' : 'translate-y-full'
-      }`}>
+      }`} style={{ height: '55vh' }}>
         {/* Handle bar */}
         <div className="w-full flex justify-center -mt-2 mb-4">
           <div className="w-16 h-1 bg-gray-300 rounded-full"></div>
         </div>
 
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Profile</h2>
+        {/* Close Button */}
+        <div className="absolute right-4 top-4">
           <button onClick={handleClose} className="text-gray-400 hover:text-gray-500">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
