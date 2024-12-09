@@ -90,6 +90,45 @@ const Dashboard = () => {
     return currentStreak;
   };
 
+  const fetchTasks = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const [userResponse, tasksResponse] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_API_URL}/auth/user`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/tasks`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+
+      setUser(userResponse.data);
+      const allTasks = tasksResponse.data;
+
+      // Filter today's tasks using the same logic as ViewTask
+      const today = new Date().toISOString().split('T')[0];
+      const todayEvents = allTasks.filter(task => 
+        new Date(task.date).toISOString().split('T')[0] === today
+      );
+      setTodayTasks(todayEvents);
+      setTasks(allTasks);
+
+      // Update stats
+      const totalTasks = allTasks.length;
+      const totalHours = allTasks.reduce((acc, task) => 
+        acc + (task.duration.hours + task.duration.minutes / 60), 0
+      );
+
+      setWeeklyStats(prev => ({
+        ...prev,
+        studyHours: Math.round(totalHours),
+        subjects: new Set(allTasks.map(task => task.subject))
+      }));
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -107,19 +146,25 @@ const Dashboard = () => {
         ]);
 
         setUser(userResponse.data);
-        setTasks(tasksResponse.data);
+        const allTasks = tasksResponse.data;
 
-        // Calculate total completed tasks
-        const completedCount = historyResponse.data.filter(entry => entry.completed).length;
-        setCompletedTasksTotal(completedCount);
-        setCompletedTasks(historyResponse.data);
+        // Debug log
+        console.log('All tasks:', allTasks);
 
         // Filter today's tasks
         const today = new Date().toISOString().split('T')[0];
-        const todayEvents = tasksResponse.data.filter(task => 
-          new Date(task.date).toISOString().split('T')[0] === today
-        );
+        console.log('Today\'s date:', today);
+
+        const todayEvents = allTasks.filter(task => {
+          const taskDate = new Date(task.date).toISOString().split('T')[0];
+          console.log('Task date:', taskDate, 'Task:', task.title);
+          return taskDate === today;
+        });
+
+        console.log('Today\'s tasks:', todayEvents);
+
         setTodayTasks(todayEvents);
+        setTasks(allTasks);
 
         // Process history for weekly stats
         const weekStart = new Date();
@@ -140,13 +185,26 @@ const Dashboard = () => {
         // Calculate streak from history
         const currentStreak = calculateStreak(historyResponse.data);
         setStreak(currentStreak);
+
+        // Set completed tasks count
+        const completedCount = historyResponse.data.filter(entry => entry.completed).length;
+        setCompletedTasksTotal(completedCount);
+        setCompletedTasks(historyResponse.data);
+
       } catch (error) {
         console.error('Error fetching data:', error);
+        if (error.response?.status === 401) {
+          navigate('/login');
+        }
       }
     };
 
     fetchData();
-  }, []);
+    // Set up an interval to refresh data
+    const intervalId = setInterval(fetchData, 60000); // Refresh every minute
+
+    return () => clearInterval(intervalId);
+  }, []); // Empty dependency array for initial load
 
   // Add this effect to sync with active timer
   useEffect(() => {
@@ -196,6 +254,14 @@ const Dashboard = () => {
       <span className="text-sm text-gray-500">{status}</span>
     </div>
   );
+
+  const formatDuration = (duration) => {
+    if (!duration) return '0m';
+    let result = '';
+    if (duration.hours > 0) result += `${duration.hours}h `;
+    if (duration.minutes > 0) result += `${duration.minutes}m`;
+    return result.trim() || '0m';
+  };
 
   if (!user) {
     return (
@@ -306,9 +372,11 @@ const Dashboard = () => {
                 <div className="mt-3 space-y-2">
                   {todayTasks.length > 0 ? (
                     todayTasks.slice(0, 3).map((task, index) => (
-                      <div key={index} className="bg-white/50 p-3 rounded-lg">
+                      <div key={task._id} className="bg-white/50 p-3 rounded-lg">
                         <div className="font-medium text-gray-800">{task.title}</div>
-                        <div className="text-xs text-gray-500">{task.subject}</div>
+                        <div className="text-xs text-gray-500">
+                          {task.subject} • {formatDuration(task.duration)}
+                        </div>
                       </div>
                     ))
                   ) : (
